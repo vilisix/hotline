@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(hotline)
 
+project(hotline LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
 #glfw
@@ -50,27 +55,5 @@ target_link_libraries(
     glfw
     IMGUI
 )
-
-
-# cmake_minimum_required(VERSION 3.2)
-# project(hotline LANGUAGES CXX)
-
-# set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
-
-# set(SOURCES
-#     src/main.cpp
-# )
-
-# # Create executable
-# add_executable(hotline ${SOURCES})
-
-# #libs
-# add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libs")
-
-# target_link_libraries(hotline IMGUI)
-# target_link_libraries(hotline GLFW)
 
 
