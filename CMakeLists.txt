@@ -46,6 +46,16 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/backends)
 ## Create main executable
 add_executable(main src/main.cpp)
 
+target_sources( main
+                PUBLIC
+                src/ActionSet.h
+                src/ActionSet.cpp
+                src/FuzzyScorer.h
+                src/FuzzyScorer.cpp
+                src/Hotline.h
+                src/Hotline.cpp
+                )
+
 find_package(OpenGL REQUIRED)
     target_link_libraries(IMGUI PUBLIC ${OPENGL_LIBRARIES})
 

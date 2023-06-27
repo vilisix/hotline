@@ -11,9 +11,14 @@
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
 #endif
+#include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
+
+#include "ActionSet.h"
+#include "Hotline.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -107,9 +112,45 @@ int main(int, char**)
 
     // Our state
     bool show_demo_window = true;
-    bool show_another_window = true;
+    bool show_hotline_window = false;
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    auto actionSet = std::make_shared<Hotline::ActionSet>();
+
+    std::vector<std::string> testActions{
+        "ApplicationShutdown",
+        "ApplicationRestart",
+        "AddNode",
+        "ToggleSounds",
+        "ToggleNotifications",
+        "ToggleMenu",
+        "Export",
+        "OpenInExplorer",
+        "SeasonTicketAddScore",
+        "SeasonTicketStartSeason",
+        "SeasonTicketDoEvent",
+        "SeasonTicketToggleEventTaskInfo",
+        "SeasonTicketAddTimedBonus",
+        "SeasonTicketFinishSeason",
+    };
+
+    for(auto& action : testActions)
+    {
+	    actionSet->AddAction(action, [action](){ std::cout << action << " executed!" << std::endl; });
+    }
+
+    auto hotline = std::make_unique<Hotline::Hotline>(actionSet);
+    std::string prevInput = "";
+    std::vector<Hotline::FuzzyScore> fuzzyVariants = actionSet->GetActionVariants("");
+    int currentVariantIdx = 0;
+    // auto variants = actionSet->GetActionVariants("Appl");
+    //
+    // for (const auto& variant : variants)
+    // {
+	   //  std::cout << variant.target << " - " << variant.score << std::endl;
+    // }
+
 
     // Main loop
 #ifdef __EMSCRIPTEN__
@@ -136,18 +177,96 @@ int main(int, char**)
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+            //ImGui::ShowDemoWindow(&show_demo_window);
         
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         
-
-        // 3. Show another simple window.
-        if (show_another_window)
+		if(ImGui::IsKeyPressed(ImGuiKey_Tab, false))
         {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+            show_hotline_window = !show_hotline_window;
+        }
+        // 3. Show another simple window.
+        if (show_hotline_window)
+        {
+            if(ImGui::IsKeyPressed(ImGuiKey_Escape, false) && prevInput.empty())
+            {
+                show_hotline_window = false;
+            }
+
+
+            ImGui::SetNextWindowPos({ImGui::GetWindowWidth(), ImGui::GetWindowHeight() * 0.5f});
+            ImGui::Begin("Another Window", &show_hotline_window, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            static char buf[32] = "";
+            //static char buf[32] = u8"NIHONGO"; // <- this is how you would write it with C++11, using real kanjis
+            ImGui::SetKeyboardFocusHere();
+        	ImGui::InputText("hotline", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_AlwaysOverwrite);
+            std::string input = buf;
+            if(input != prevInput)
+            {
+	            prevInput = input;
+                currentVariantIdx = 0;
+                fuzzyVariants = actionSet->GetActionVariants(input);
+            }
+
+            if(ImGui::IsKeyPressed(ImGuiKey_DownArrow, false))
+            {
+	            currentVariantIdx++;
+                if(currentVariantIdx >= fuzzyVariants.size())
+                {
+	                currentVariantIdx = 0;
+                }
+            }
+
+            if(ImGui::IsKeyPressed(ImGuiKey_UpArrow, false))
+            {
+	            currentVariantIdx--;
+                if (currentVariantIdx < 0)
+                {
+	                currentVariantIdx = fuzzyVariants.size() - 1;
+                }
+            }
+
+            for (size_t fuzzyIndex = 0; fuzzyIndex < fuzzyVariants.size(); fuzzyIndex++)
+            {
+                if(fuzzyIndex == currentVariantIdx)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.2f, 0.2f, 0.4f, 1.0f));
+                    ImVec2 textSize = ImGui::CalcTextSize(fuzzyVariants[fuzzyIndex].target.c_str());
+                    ImGui::BeginChild("selected", {ImGui::GetContentRegionAvail().x, textSize.y * 1.2f});
+                    ImGui::PopStyleColor();
+                }
+                if(!fuzzyVariants[fuzzyIndex].positions.empty())
+                {
+					int highlightIdx = 0;
+                    char scoreBuf[3] = "x\0";
+
+                    for(size_t i = 0; i < fuzzyVariants[fuzzyIndex].target.size(); i++)
+                    {
+                        scoreBuf[0] = fuzzyVariants[fuzzyIndex].target[i];
+	                    if(highlightIdx < fuzzyVariants[fuzzyIndex].positions.size() && i == fuzzyVariants[fuzzyIndex].positions[highlightIdx])
+	                    {
+		                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.4f, 1.0f), scoreBuf);
+                            highlightIdx++;
+	                    }else
+	                    {
+		                    ImGui::Text(scoreBuf);
+	                    }
+                        if(i != fuzzyVariants[fuzzyIndex].target.size() - 1)
+                        {
+							ImGui::SameLine(0, 0);
+                        }
+                    }
+                }else
+                {
+	                ImGui::Text(fuzzyVariants[fuzzyIndex].target.c_str());
+                }
+
+                if(fuzzyIndex == currentVariantIdx)
+                {
+                    ImGui::EndChild();
+                }
+            }
+
             ImGui::End();
         }
 
