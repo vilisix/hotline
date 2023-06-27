@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <xstring>
+#include <string>
 
 namespace Hotline{
 
@@ -19,7 +19,6 @@ private:
     int ComputeCharScore(const char& queryChar, const char& queryCharLower,
 						const char& targetChar, const char& targetCharLower,
 						int targetIdx, int sequenceMatch);
-
 };
 
 }

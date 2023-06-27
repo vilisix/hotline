@@ -87,6 +87,7 @@ int main(int, char**)
     //ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, {0.f, 0.5f});
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 3.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5.0f);
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
@@ -110,14 +111,10 @@ int main(int, char**)
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
 
-    // Our state
-    bool show_demo_window = true;
-    bool show_hotline_window = false;
-
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    std::string currentMessage = "no_action_executed";
 
     auto actionSet = std::make_shared<Hotline::ActionSet>();
-
     std::vector<std::string> testActions{
         "ApplicationShutdown",
         "ApplicationRestart",
@@ -127,29 +124,20 @@ int main(int, char**)
         "ToggleMenu",
         "Export",
         "OpenInExplorer",
-        "SeasonTicketAddScore",
-        "SeasonTicketStartSeason",
-        "SeasonTicketDoEvent",
-        "SeasonTicketToggleEventTaskInfo",
-        "SeasonTicketAddTimedBonus",
-        "SeasonTicketFinishSeason",
+        "DuplicateNode",
+        "RemoveNode",
+        "FindAllReferences",
+        "ReloadResources",
+        "Settings",
+        "Preferences",
     };
 
     for(auto& action : testActions)
     {
-	    actionSet->AddAction(action, [action](){ std::cout << action << " executed!" << std::endl; });
+	    actionSet->AddAction(action, [action, &currentMessage](){ currentMessage = action + " executed!"; });
     }
 
     auto hotline = std::make_unique<Hotline::Hotline>(actionSet);
-    std::string prevInput = "";
-    std::vector<Hotline::FuzzyScore> fuzzyVariants = actionSet->GetActionVariants("");
-    int currentVariantIdx = 0;
-    // auto variants = actionSet->GetActionVariants("Appl");
-    //
-    // for (const auto& variant : variants)
-    // {
-	   //  std::cout << variant.target << " - " << variant.score << std::endl;
-    // }
 
 
     // Main loop
@@ -175,101 +163,25 @@ int main(int, char**)
         ImGui::NewFrame();
         
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            //ImGui::ShowDemoWindow(&show_demo_window);
-        
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        
-		if(ImGui::IsKeyPressed(ImGuiKey_Tab, false))
-        {
-            show_hotline_window = !show_hotline_window;
-        }
-        // 3. Show another simple window.
-        if (show_hotline_window)
-        {
-            if(ImGui::IsKeyPressed(ImGuiKey_Escape, false) && prevInput.empty())
-            {
-                show_hotline_window = false;
-            }
 
 
-            ImGui::SetNextWindowPos({ImGui::GetWindowWidth(), ImGui::GetWindowHeight() * 0.5f});
-            ImGui::Begin("Another Window", &show_hotline_window, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            static char buf[32] = "";
-            //static char buf[32] = u8"NIHONGO"; // <- this is how you would write it with C++11, using real kanjis
-            ImGui::SetKeyboardFocusHere();
-        	ImGui::InputText("hotline", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_AlwaysOverwrite);
-            std::string input = buf;
-            if(input != prevInput)
-            {
-	            prevInput = input;
-                currentVariantIdx = 0;
-                fuzzyVariants = actionSet->GetActionVariants(input);
-            }
 
-            if(ImGui::IsKeyPressed(ImGuiKey_DownArrow, false))
-            {
-	            currentVariantIdx++;
-                if(currentVariantIdx >= fuzzyVariants.size())
-                {
-	                currentVariantIdx = 0;
-                }
-            }
+        //Hotline main input and textInput update cycle
+        hotline->Update();
 
-            if(ImGui::IsKeyPressed(ImGuiKey_UpArrow, false))
-            {
-	            currentVariantIdx--;
-                if (currentVariantIdx < 0)
-                {
-	                currentVariantIdx = fuzzyVariants.size() - 1;
-                }
-            }
 
-            for (size_t fuzzyIndex = 0; fuzzyIndex < fuzzyVariants.size(); fuzzyIndex++)
-            {
-                if(fuzzyIndex == currentVariantIdx)
-                {
-                    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.2f, 0.2f, 0.4f, 1.0f));
-                    ImVec2 textSize = ImGui::CalcTextSize(fuzzyVariants[fuzzyIndex].target.c_str());
-                    ImGui::BeginChild("selected", {ImGui::GetContentRegionAvail().x, textSize.y * 1.2f});
-                    ImGui::PopStyleColor();
-                }
-                if(!fuzzyVariants[fuzzyIndex].positions.empty())
-                {
-					int highlightIdx = 0;
-                    char scoreBuf[3] = "x\0";
 
-                    for(size_t i = 0; i < fuzzyVariants[fuzzyIndex].target.size(); i++)
-                    {
-                        scoreBuf[0] = fuzzyVariants[fuzzyIndex].target[i];
-	                    if(highlightIdx < fuzzyVariants[fuzzyIndex].positions.size() && i == fuzzyVariants[fuzzyIndex].positions[highlightIdx])
-	                    {
-		                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.4f, 1.0f), scoreBuf);
-                            highlightIdx++;
-	                    }else
-	                    {
-		                    ImGui::Text(scoreBuf);
-	                    }
-                        if(i != fuzzyVariants[fuzzyIndex].target.size() - 1)
-                        {
-							ImGui::SameLine(0, 0);
-                        }
-                    }
-                }else
-                {
-	                ImGui::Text(fuzzyVariants[fuzzyIndex].target.c_str());
-                }
 
-                if(fuzzyIndex == currentVariantIdx)
-                {
-                    ImGui::EndChild();
-                }
-            }
 
-            ImGui::End();
-        }
-
+        //info window
+        ImGui::SetNextWindowPos({0.f, 0.f});
+        ImGui::Begin("InfoWindow", 0, ImGuiWindowFlags_NoTitleBar 
+                                                            | ImGuiWindowFlags_NoMove 
+                                                            | ImGuiWindowFlags_AlwaysAutoResize 
+                                                            | ImGuiWindowFlags_NoScrollbar);
+        ImGui::Text("Press F1 to open hotline");
+        ImGui::Text(currentMessage.c_str());
+        ImGui::End();
         // Rendering
         ImGui::Render();
         int display_w, display_h;
