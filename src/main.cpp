@@ -111,7 +111,7 @@ int main(int, char**)
     //IM_ASSERT(font != nullptr);
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    std::string currentMessage = "no_action_executed";
+    std::vector<std::string> infoMessages;
 
     auto actionSet = std::make_shared<Hotline::ActionSet>(true);
     std::vector<std::string> testActions{
@@ -133,7 +133,7 @@ int main(int, char**)
 
     for(auto& action : testActions)
     {
-	    actionSet->AddAction(action, [action, &currentMessage](){ currentMessage = action + " executed!"; });
+	    actionSet->AddAction(action, [action, &infoMessages](){ infoMessages.push_back(action + " executed!"); });
     }
 
     auto hotline = std::make_unique<Hotline::Hotline>(actionSet);
@@ -174,12 +174,17 @@ int main(int, char**)
 
         //info window
         ImGui::SetNextWindowPos({0.f, 0.f});
+        ImGui::SetNextWindowBgAlpha(0.5f);
         ImGui::Begin("InfoWindow", 0, ImGuiWindowFlags_NoTitleBar 
                                                             | ImGuiWindowFlags_NoMove 
                                                             | ImGuiWindowFlags_AlwaysAutoResize 
                                                             | ImGuiWindowFlags_NoScrollbar);
         ImGui::Text("Press F1 to open hotline");
-        ImGui::Text(currentMessage.c_str());
+        ImGui::Separator();
+        for (const auto& message : infoMessages)
+        {
+			ImGui::Text(message.c_str());
+        }
         ImGui::End();
         // Rendering
         ImGui::Render();

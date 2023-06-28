@@ -15,10 +15,12 @@ namespace Hotline {
 		virtual void Toggle();
 
 	private:
+		std::vector<FuzzyScore>& GetCurrentVariantContainer();
 		void Reset();
 		void HandleKeyInput();
 		void HandleTextInput(const std::string& input);
-		void DrawVariants();
+		void HandleApplyCommand();
+		void DrawVariants(const std::vector<FuzzyScore> variants);
 		void DrawVariant(const FuzzyScore& variant);
 
 		std::shared_ptr<ActionSet> _set;
@@ -28,6 +30,7 @@ namespace Hotline {
 
 		char _inputBuffer[128] = "";
 		std::string _textInput;
-		std::vector<FuzzyScore> _variants;
+		std::vector<FuzzyScore> _queryVariants;
+		std::vector<FuzzyScore> _recentCommands;
 	};
 }
