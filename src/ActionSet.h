@@ -11,7 +11,7 @@ namespace Hotline{
 
 class ActionSet{
 public:
-    ActionSet();
+    ActionSet(bool showAllOnEmptyInput = false);
 	void AddAction(const std::string& name, std::function<void()>&& func);
     void ExecuteAction(const std::string& name);
 
@@ -19,6 +19,8 @@ public:
 private:
     std::map<std::string, std::function<void()>> _actions;
     std::shared_ptr<FuzzyScorer> _scorer;
+
+    bool _showAllOnEmptyInput = false;
 };
 
 }

@@ -18,18 +18,22 @@ void Hotline::Update()
         return;
     }
 
-    ImGui::SetNextWindowPos({ImGui::GetWindowWidth(), ImGui::GetWindowHeight() * 0.5f});
-    ImGui::Begin("HotlineWindow", 0, ImGuiWindowFlags_NoTitleBar 
-                                                        | ImGuiWindowFlags_NoMove 
-                                                        | ImGuiWindowFlags_AlwaysAutoResize 
-                                                        | ImGuiWindowFlags_NoScrollbar);
-    static char buf[32] = "";
+    auto io = ImGui::GetIO();
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.25f), ImGuiCond_Always, ImVec2(0.5f,0.0f));
+    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.5f, 0.f));
+	ImGui::Begin("HotlineWindow", 0, ImGuiWindowFlags_NoTitleBar 
+														| ImGuiWindowFlags_NoMove 
+														| ImGuiWindowFlags_AlwaysAutoResize
+														| ImGuiWindowFlags_NoScrollbar);
     ImGui::SetKeyboardFocusHere();
-    ImGui::InputText("hotline", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_AlwaysOverwrite);
-    
-    HandleTextInput(buf);
-    DrawVariants();
+    ImGui::Text("hotline");
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    ImGui::SetWindowFontScale(1.4f);
+    ImGui::InputText("hotline", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), ImGuiInputTextFlags_EscapeClearsAll 
+															| ImGuiInputTextFlags_AlwaysOverwrite);
 
+    HandleTextInput(_inputBuffer);
+    DrawVariants();
     ImGui::End();
 }
 
@@ -62,16 +66,16 @@ void Hotline::HandleKeyInput()
         Toggle();
     }
 
-    if(ImGui::IsKeyPressed(ImGuiKey_DownArrow, false)
-    || (ImGui::IsKeyPressed(ImGuiKey_Tab, false) && !ImGui::IsKeyDown(ImGuiKey_LeftShift))){
+    if(ImGui::IsKeyPressed(ImGuiKey_DownArrow)
+    || (ImGui::IsKeyPressed(ImGuiKey_Tab) && !ImGui::IsKeyDown(ImGuiKey_LeftShift))){
         _selectionIndex++;
         if(_selectionIndex >= _variants.size()){
             _selectionIndex = 0;
         }
     }
 
-    if(ImGui::IsKeyPressed(ImGuiKey_UpArrow, false)
-    || (ImGui::IsKeyPressed(ImGuiKey_Tab, false) && ImGui::IsKeyDown(ImGuiKey_LeftShift))){
+    if(ImGui::IsKeyPressed(ImGuiKey_UpArrow)
+    || (ImGui::IsKeyPressed(ImGuiKey_Tab) && ImGui::IsKeyDown(ImGuiKey_LeftShift))){
         _selectionIndex--;
         if (_selectionIndex < 0){
             _selectionIndex = _variants.size() - 1;
@@ -99,11 +103,13 @@ void Hotline::DrawVariants()
         }
 
         ImVec2 textSize = ImGui::CalcTextSize(_variants[variantIndex].target.c_str());
-        ImGui::BeginChild(("variant" + std::to_string(variantIndex)).c_str(), {ImGui::GetContentRegionAvail().x, textSize.y * 1.3f}, 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::BeginChild(("variant" + std::to_string(variantIndex)).c_str(), {ImGui::GetContentRegionAvail().x, textSize.y * 1.25f}, 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
         if(variantIndex == _selectionIndex){
             ImGui::PopStyleColor();
         }
 
+        ImVec2 textPosition{5.f, (ImGui::GetContentRegionAvail().y - textSize.y) * 0.5f};
+        ImGui::SetCursorPos(textPosition);
         DrawVariant(_variants[variantIndex]);
         ImGui::EndChild();
     }
@@ -119,7 +125,7 @@ void Hotline::DrawVariant(const FuzzyScore& variant)
         for(size_t i = 0; i < variant.target.size(); i++){
             scoreBuf[0] = variant.target[i];
             if(highlightIdx < variant.positions.size() && i == variant.positions[highlightIdx]){
-                ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.4f, 1.0f), scoreBuf);
+                ImGui::TextColored(ImVec4(0.996f, 0.447f, 0.298f, 1.0f), scoreBuf);
                 highlightIdx++;
             }else{
                 ImGui::Text(scoreBuf);

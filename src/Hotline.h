@@ -3,32 +3,31 @@
 #include <string>
 #include "FuzzyScorer.h"
 
-namespace Hotline{
+namespace Hotline {
+	class ActionSet;
 
-class ActionSet;
+	class Hotline {
+	public:
+		Hotline(std::shared_ptr<ActionSet> set);
+		virtual ~Hotline() = default;
 
-class HotlineBase{
-    virtual void Update() = 0;
-};
+		virtual void Update();
+		virtual void Toggle();
 
-class Hotline : public HotlineBase{
-public:
-    Hotline(std::shared_ptr<ActionSet> set);
-    void Update() override;
-    void Toggle();
-private:
-    void Reset();
-    void HandleKeyInput();
-    void HandleTextInput(const std::string& input);
-    void DrawVariants();
-    void DrawVariant(const FuzzyScore& variant);
-    std::shared_ptr<ActionSet> _set;
-    std::string _query;
+	private:
+		void Reset();
+		void HandleKeyInput();
+		void HandleTextInput(const std::string& input);
+		void DrawVariants();
+		void DrawVariant(const FuzzyScore& variant);
 
-    bool _isActive = false;
-    int _selectionIndex = 0;
-    std::string _textInput;
-    std::vector<FuzzyScore> _variants;
-};
+		std::shared_ptr<ActionSet> _set;
 
+		bool _isActive = false;
+		int _selectionIndex = 0;
+
+		char _inputBuffer[128] = "";
+		std::string _textInput;
+		std::vector<FuzzyScore> _variants;
+	};
 }

@@ -85,10 +85,9 @@ int main(int, char**)
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, {0.f, 0.5f});
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 3.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5.0f);
-    //ImGui::StyleColorsLight();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -114,7 +113,7 @@ int main(int, char**)
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     std::string currentMessage = "no_action_executed";
 
-    auto actionSet = std::make_shared<Hotline::ActionSet>();
+    auto actionSet = std::make_shared<Hotline::ActionSet>(true);
     std::vector<std::string> testActions{
         "ApplicationShutdown",
         "ApplicationRestart",

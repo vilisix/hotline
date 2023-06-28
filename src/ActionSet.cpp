@@ -8,7 +8,9 @@
 
 namespace Hotline{
 
-ActionSet::ActionSet() : _scorer(std::make_shared<FuzzyScorer>())
+ActionSet::ActionSet(bool showAllOnEmptyInput)
+	: _scorer(std::make_shared<FuzzyScorer>()),
+	_showAllOnEmptyInput(showAllOnEmptyInput)
 {
 }
 
@@ -28,7 +30,12 @@ std::vector<FuzzyScore> ActionSet::GetActionVariants(const std::string &query)
 
     if(query.empty())
     {
-	    for (auto& action : _actions)
+        if(!_showAllOnEmptyInput)
+        {
+			return result;
+        }
+
+        for (auto& action : _actions)
 	    {
 		    result.push_back({action.first, 0, {}});
 	    }
