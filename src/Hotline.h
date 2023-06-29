@@ -8,7 +8,7 @@ namespace Hotline {
 
 	class Hotline {
 	public:
-		Hotline(std::shared_ptr<ActionSet> set);
+		Hotline(std::shared_ptr<ActionSet> set, bool showRecents = true);
 		virtual ~Hotline() = default;
 
 		virtual void Update();
@@ -24,6 +24,7 @@ namespace Hotline {
 		void DrawVariant(const FuzzyScore& variant);
 
 		std::shared_ptr<ActionSet> _set;
+        bool _showRecents;
 
 		bool _isActive = false;
 		int _selectionIndex = 0;
@@ -32,5 +33,5 @@ namespace Hotline {
 		std::string _textInput;
 		std::vector<FuzzyScore> _queryVariants;
 		std::vector<FuzzyScore> _recentCommands;
-	};
+    };
 }

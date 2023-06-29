@@ -6,8 +6,8 @@
 
 namespace Hotline{
 
-Hotline::Hotline(std::shared_ptr<ActionSet> set)
-: _set(set)
+Hotline::Hotline(std::shared_ptr<ActionSet> set, bool showRecents)
+: _set(set), _showRecents(showRecents)
 {}
 
 void Hotline::Update()
@@ -44,6 +44,9 @@ void Hotline::Toggle()
 }
 
 std::vector<FuzzyScore>& Hotline::GetCurrentVariantContainer() {
+    if(!_showRecents){
+        return _queryVariants;
+    }
     return _textInput.empty() ? _recentCommands : _queryVariants;
 }
 
@@ -99,12 +102,12 @@ void Hotline::HandleTextInput(const std::string &input)
 }
 
 void Hotline::HandleApplyCommand() {
-    if(_textInput.empty())
+    if(_showRecents && _textInput.empty() && !_recentCommands.empty())
     {
 		_set->ExecuteAction(_recentCommands[_selectionIndex].target);
         auto currentCommandIter = _recentCommands.begin() + _selectionIndex;
         std::rotate(_recentCommands.begin(), currentCommandIter, currentCommandIter + 1);
-    }else
+    }else if(!_queryVariants.empty())
     {
         auto action = _queryVariants[_selectionIndex].target;
 		_set->ExecuteAction(action);

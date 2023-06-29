@@ -113,7 +113,7 @@ int main(int, char**)
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     std::vector<std::string> infoMessages;
 
-    auto actionSet = std::make_shared<Hotline::ActionSet>(true);
+    auto actionSet = std::make_shared<Hotline::ActionSet>(false);
     std::vector<std::string> testActions{
         "ApplicationShutdown",
         "ApplicationRestart",
@@ -136,7 +136,7 @@ int main(int, char**)
 	    actionSet->AddAction(action, [action, &infoMessages](){ infoMessages.push_back(action + " executed!"); });
     }
 
-    auto hotline = std::make_unique<Hotline::Hotline>(actionSet);
+    auto hotline = std::make_unique<Hotline::Hotline>(actionSet, false);
 
 
     // Main loop
