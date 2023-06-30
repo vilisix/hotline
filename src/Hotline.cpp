@@ -1,13 +1,16 @@
 #include "Hotline.h"
 
 #include <memory>
-#include "imgui.h"
 #include "ActionSet.h"
 
 namespace Hotline{
 
-Hotline::Hotline(std::shared_ptr<ActionSet> set, bool showRecents)
-: _set(set), _showRecents(showRecents)
+Hotline::Hotline(std::shared_ptr<ActionSet> set)
+: _set(std::move(set)), _config(std::make_unique<Config>())
+{}
+
+Hotline::Hotline(std::shared_ptr<ActionSet> set, std::unique_ptr<Config> config)
+: _set(std::move(set)), _config(std::move(config))
 {}
 
 void Hotline::Update()
@@ -18,22 +21,27 @@ void Hotline::Update()
         return;
     }
 
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, _config->childRounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, _config->frameRounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, _config->windowRounding);
+
     auto io = ImGui::GetIO();
-    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.25f), ImGuiCond_Always, ImVec2(0.5f,0.0f));
-    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.5f, 0.f));
-	ImGui::Begin("HotlineWindow", 0, ImGuiWindowFlags_NoTitleBar 
-														| ImGuiWindowFlags_NoMove 
-														| ImGuiWindowFlags_AlwaysAutoResize
-														| ImGuiWindowFlags_NoScrollbar);
+    ImVec2 position{io.DisplaySize.x * _config->windowPos.x, io.DisplaySize.y * _config->windowPos.y};
+    ImVec2 size{io.DisplaySize.x * _config->windowSize.x, io.DisplaySize.y * _config->windowSize.y};
+    ImGui::SetNextWindowPos(position, ImGuiCond_Always, _config->windowPivot);
+    ImGui::SetNextWindowSize(size);
+	ImGui::Begin("HotlineWindow", 0, _config->windowFlags);
     ImGui::SetKeyboardFocusHere();
-    ImGui::Text("hotline");
+    ImGui::Text(_config->header.c_str());
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    ImGui::SetWindowFontScale(1.4f);
-    ImGui::InputText("hotline", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), ImGuiInputTextFlags_EscapeClearsAll 
-															| ImGuiInputTextFlags_AlwaysOverwrite);
+    ImGui::SetWindowFontScale(_config->windowFontScale);
+    ImGui::InputText("hotline", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), _config->inputTextFlags);
 
     HandleTextInput(_inputBuffer);
     DrawVariants(GetCurrentVariantContainer());
+
+    ImGui::SetWindowFontScale(1.0f);
+    ImGui::PopStyleVar(3);
     ImGui::End();
 }
 
@@ -44,7 +52,7 @@ void Hotline::Toggle()
 }
 
 std::vector<FuzzyScore>& Hotline::GetCurrentVariantContainer() {
-    if(!_showRecents){
+    if(!_config->showRecentActions){
         return _queryVariants;
     }
     return _textInput.empty() ? _recentCommands : _queryVariants;
@@ -60,7 +68,7 @@ void Hotline::Reset()
 
 void Hotline::HandleKeyInput()
 {
-    if(ImGui::IsKeyPressed(ImGuiKey_F1, false)){
+    if(ImGui::IsKeyPressed(_config->toggleKey, false)){
         Toggle();
     }
 
@@ -102,7 +110,7 @@ void Hotline::HandleTextInput(const std::string &input)
 }
 
 void Hotline::HandleApplyCommand() {
-    if(_showRecents && _textInput.empty() && !_recentCommands.empty())
+    if(_config->showRecentActions && _textInput.empty() && !_recentCommands.empty())
     {
 		_set->ExecuteAction(_recentCommands[_selectionIndex].target);
         auto currentCommandIter = _recentCommands.begin() + _selectionIndex;
@@ -131,16 +139,17 @@ void Hotline::DrawVariants(const std::vector<FuzzyScore> variants)
 {
     for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++){
         if(variantIndex == _selectionIndex){
-            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.2f, 0.2f, 0.4f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, _config->variantBackground);
         }
 
         ImVec2 textSize = ImGui::CalcTextSize(variants[variantIndex].target.c_str());
-        ImGui::BeginChild(("variant" + std::to_string(variantIndex)).c_str(), {ImGui::GetContentRegionAvail().x, textSize.y * 1.25f}, 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
+        ImVec2 childSize = {ImGui::GetContentRegionAvail().x, textSize.y * _config->variantHeightMultiplier};
+        ImGui::BeginChild(("variant" + std::to_string(variantIndex)).c_str(), childSize, 0, _config->variantFlags);
         if(variantIndex == _selectionIndex){
             ImGui::PopStyleColor();
         }
 
-        ImVec2 textPosition{5.f, (ImGui::GetContentRegionAvail().y - textSize.y) * 0.5f};
+        ImVec2 textPosition{_config->variantTextHorOffset, (ImGui::GetContentRegionAvail().y - textSize.y) * 0.5f};
         ImGui::SetCursorPos(textPosition);
         DrawVariant(variants[variantIndex]);
         ImGui::EndChild();
@@ -157,7 +166,7 @@ void Hotline::DrawVariant(const FuzzyScore& variant)
         for(size_t i = 0; i < variant.target.size(); i++){
             scoreBuf[0] = variant.target[i];
             if(highlightIdx < variant.positions.size() && i == variant.positions[highlightIdx]){
-                ImGui::TextColored(ImVec4(0.996f, 0.447f, 0.298f, 1.0f), scoreBuf);
+                ImGui::TextColored(_config->variantMatchLettersColor, scoreBuf);
                 highlightIdx++;
             }else{
                 ImGui::Text(scoreBuf);
