@@ -1,13 +1,15 @@
 #pragma once
+
 #include <memory>
 #include <string>
 #include "FuzzyScorer.h"
 #include "imgui.h"
+#include "ActionSet.h"
 
 namespace Hotline {
-	class ActionSet;
+    class ActionSet;
 
-    struct Config{
+    struct Config {
         //  main
         ImGuiKey toggleKey = ImGuiKey_F1;
         bool showRecentActions = false;
@@ -26,8 +28,8 @@ namespace Hotline {
         std::string header = "hotline";
         float windowFontScale = 1.4f;
         //  input
-        ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EscapeClearsAll
-                                             | ImGuiInputTextFlags_AlwaysOverwrite;
+        ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EscapeClearsAll;
+//                                             | ImGuiInputTextFlags_AlwaysOverwrite;
         //  variants
         ImVec4 variantBackground = {0.2f, 0.2f, 0.4f, 1.0f};
         float variantHeightMultiplier = 1.25f;
@@ -35,35 +37,52 @@ namespace Hotline {
                                         | ImGuiWindowFlags_AlwaysAutoResize;
         float variantTextHorOffset = 5.f;
         ImVec4 variantMatchLettersColor = {0.996f, 0.447f, 0.298f, 1.0f};
+        ImVec4 variantArgumentsColor = {0.996f, 0.447f, 0.298f, 1.0f};
+        ImVec4 variantInputColor = {0.749f, 0.855f, 0.655f, 1.0f};
     };
 
-	class Hotline {
-	public:
-		Hotline(std::shared_ptr<ActionSet> set);
-		Hotline(std::shared_ptr<ActionSet> set, std::unique_ptr<Config> config);
+    class Hotline {
+    public:
+        Hotline(std::shared_ptr<ActionSet> set);
+
+        Hotline(std::shared_ptr<ActionSet> set, std::unique_ptr<Config> config);
+
         virtual ~Hotline() = default;
 
-		virtual void Update();
-		virtual void Toggle();
+        virtual void Update();
 
-	private:
-		std::vector<FuzzyScore>& GetCurrentVariantContainer();
-		void Reset();
-		void HandleKeyInput();
-		void HandleTextInput(const std::string& input);
-		void HandleApplyCommand();
-		void DrawVariants(const std::vector<FuzzyScore> variants);
-		void DrawVariant(const FuzzyScore& variant);
+        virtual void Toggle();
 
-		std::shared_ptr<ActionSet> _set;
+    private:
+        std::vector<ActionVariant> &GetCurrentVariantContainer();
+
+        void Reset();
+
+        void HandleKeyInput();
+
+        void HandleTextInput(const std::string &input);
+
+        void HandleApplyCommand();
+
+        void DrawVariants(const std::vector<ActionVariant> variants);
+
+        void DrawVariant(const ActionVariant &variant);
+
+        std::shared_ptr<ActionSet> _set;
         std::unique_ptr<Config> _config;
 
-		bool _isActive = false;
-		int _selectionIndex = 0;
+        bool _isActive = false;
+        int _selectionIndex = 0;
 
-		char _inputBuffer[128] = "";
-		std::string _textInput;
-		std::vector<FuzzyScore> _queryVariants;
-		std::vector<FuzzyScore> _recentCommands;
+        char _inputBuffer[128] = "";
+        std::string _input;
+        std::string _prevActionName;
+        std::string _currentActionName;
+        std::vector<std::string> _actionArguments;
+
+        std::vector<ActionVariant> _queryVariants;
+        std::vector<ActionVariant> _recentCommands;
+
+        void SplitInput();
     };
 }

@@ -44,7 +44,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/backends)
 
 ## Create main executable
-add_executable(main src/main.cpp)
+add_executable(main src/main.cpp src/Action.h src/ArgProvider.h)
 
 target_sources( main
                 PUBLIC

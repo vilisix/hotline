@@ -4,61 +4,51 @@
 #include <functional>
 
 #include "FuzzyScorer.h"
-#include <iostream>
 
-namespace Hotline{
+namespace Hotline {
 
-ActionSet::ActionSet(bool showAllOnEmptyInput)
-	: _scorer(std::make_shared<FuzzyScorer>()),
-	_showAllOnEmptyInput(showAllOnEmptyInput)
-{
-}
+    ActionSet::ActionSet()
+            : _scorer(std::make_unique<FuzzyScorer>()) {}
 
-void ActionSet::AddAction(const std::string &name, std::function<void()> &&func)
-{
-    _actions[name] = std::move(func);
-}
+    void ActionSet::ExecuteAction(const std::string &name) {
+        if (auto found = _actions.find(name); found != _actions.end()) {
+            found->second->Start();
+        }
+    }
 
-void ActionSet::ExecuteAction(const std::string &name)
-{
-    _actions[name]();
-}
+    void ActionSet::ExecuteAction(const std::string &name, const std::vector<std::string> &args) {
+        if (auto found = _actions.find(name); found != _actions.end()) {
+            found->second->Start(args);
+        }
+    }
 
-std::vector<FuzzyScore> ActionSet::GetActionVariants(const std::string &query)
-{
-    std::vector<FuzzyScore> result;
+    std::vector<ActionVariant> ActionSet::FindVariants(const std::string &query) {
+        std::vector<ActionVariant> result;
 
-    if(query.empty())
-    {
-        if(!_showAllOnEmptyInput)
-        {
-			return result;
+        if (query.empty()) {
+            for (auto &action: _actions) {
+                result.push_back({action.first, action.second->GetArguments(), {0, {}}});
+            }
+            return std::move(result);
         }
 
-        for (auto& action : _actions)
-	    {
-		    result.push_back({action.first, 0, {}});
-	    }
+        for (auto &action: _actions) {
+            auto lowerAction = action.first;
+            std::transform(lowerAction.begin(), lowerAction.end(), lowerAction.begin(), ::tolower);
+
+            auto lowerQuery = query;
+            std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);
+
+            auto score = _scorer->GetFuzzyScore(query, lowerQuery, query.size(), action.first, lowerAction,
+                                                action.first.size());
+            if (score.score > 0) {
+                result.push_back({action.first, action.second->GetArguments(), score});
+            }
+        }
+
+        std::sort(result.begin(), result.end(),
+                  [](ActionVariant &a, ActionVariant &b) { return a.fuzzyResult.score > b.fuzzyResult.score; });
+
         return std::move(result);
     }
-
-    for(auto& action : _actions){
-        auto lowerAction = action.first;
-        std::transform(lowerAction.begin(), lowerAction.end(), lowerAction.begin(), ::tolower);
-
-        auto lowerQuery = query;
-        std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);
-
-        auto score = _scorer->GetFuzzyScore(query, lowerQuery, query.size(), action.first, lowerAction, action.first.size());
-		if(score.score > 0)
-		{
-			result.push_back(score);
-		}
-    }
-
-    std::sort(result.begin(), result.end(), [](FuzzyScore& a, FuzzyScore& b){ return a.score > b.score;});
-
-    return std::move(result);
-}
-
 }

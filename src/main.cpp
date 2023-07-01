@@ -7,10 +7,12 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
+
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
 #endif
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -19,6 +21,7 @@
 
 #include "ActionSet.h"
 #include "Hotline.h"
+#include "ArgProvider.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -32,15 +35,31 @@
 #include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
 
-static void glfw_error_callback(int error, const char* description)
-{
+static void glfw_error_callback(int error, const char *description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+static std::vector<std::string> infoMessages;
+
+void testFunctionZeroPar() {
+    infoMessages.push_back("executed 0 param");
+}
+
+void testFunctionOnePar(const std::string &param1) {
+    infoMessages.push_back("executed 1 param: " + param1);
+}
+
+void testFunctionTwoPar(const std::string &param1, int param2) {
+    infoMessages.push_back("executed 2 param: " + param1 + " " + std::to_string(param2));
+}
+
+void testFunctionThreePar(const std::string &param1, int param2, bool param3) {
+    infoMessages.push_back("executed 3 param: " + param1 + " " + std::to_string(param2) + " " + std::to_string(param3));
 }
 
 
 // Main code
-int main(int, char**)
-{
+int main(int, char **) {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -54,7 +73,7 @@ int main(int, char**)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 #elif defined(__APPLE__)
     // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
+    const char *glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
@@ -68,14 +87,15 @@ int main(int, char**)
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "hotline example", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "hotline example", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO &io = ImGui::GetIO();
+    (void) io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -83,33 +103,24 @@ int main(int, char**)
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 
-    std::vector<std::string> infoMessages;
 
     //  test action set for understanding how it works
-    auto actionSet = std::make_shared<Hotline::ActionSet>(false);
-    std::vector<std::string> testActions{
-        "ApplicationShutdown",
-        "ApplicationRestart",
-        "AddNode",
-        "ToggleSounds",
-        "ToggleNotifications",
-        "ToggleMenu",
-        "Export",
-        "OpenInExplorer",
-        "DuplicateNode",
-        "RemoveNode",
-        "FindAllReferences",
-        "ReloadResources",
-        "Settings",
-        "Preferences",
-    };
-    for(auto& action : testActions)
-    {
-	    actionSet->AddAction(action, [action, &infoMessages](){ infoMessages.push_back(action + " executed!"); });
-    }
+    auto actionSet = std::make_shared<Hotline::ActionSet>();
+
+    actionSet->AddAction("testZeroPar", testFunctionZeroPar);
+    actionSet->AddAction("testOnePar", testFunctionOnePar,
+                         ArgProvider<std::string>("Name"));
+    actionSet->AddAction("testTwoPar", testFunctionTwoPar,
+                         ArgProvider<std::string>("Name"),
+                         ArgProvider<int>("Level"));
+    actionSet->AddAction("testThreePar", testFunctionThreePar,
+                         ArgProvider<std::string>("Name"),
+                         ArgProvider<int>("Level"),
+                         ArgProvider<bool>("IsActive"));
 
     //  instantiation of hotline
     auto hotlineConfig = std::make_unique<Hotline::Config>();
+    hotlineConfig->showRecentActions = true;
     // you can modify config as you like here
     auto hotline = std::make_unique<Hotline::Hotline>(actionSet, std::move(hotlineConfig));
 
@@ -135,15 +146,14 @@ int main(int, char**)
         //  test info window
         ImGui::SetNextWindowPos({0.f, 0.f});
         ImGui::SetNextWindowBgAlpha(0.5f);
-        ImGui::Begin("InfoWindow", 0, ImGuiWindowFlags_NoTitleBar 
-                                                            | ImGuiWindowFlags_NoMove 
-                                                            | ImGuiWindowFlags_AlwaysAutoResize 
-                                                            | ImGuiWindowFlags_NoScrollbar);
+        ImGui::Begin("InfoWindow", 0, ImGuiWindowFlags_NoTitleBar
+                                      | ImGuiWindowFlags_NoMove
+                                      | ImGuiWindowFlags_AlwaysAutoResize
+                                      | ImGuiWindowFlags_NoScrollbar);
         ImGui::Text("Press F1 to open hotline");
         ImGui::Separator();
-        for (const auto& message : infoMessages)
-        {
-			ImGui::Text(message.c_str());
+        for (const auto &message: infoMessages) {
+            ImGui::Text(message.c_str());
         }
         ImGui::End();
 
@@ -153,12 +163,13 @@ int main(int, char**)
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w,
+                     clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
-        }
+    }
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_MAINLOOP_END;
 #endif
