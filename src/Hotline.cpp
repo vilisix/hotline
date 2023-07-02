@@ -76,6 +76,7 @@ namespace Hotline {
         ImGui::SetNextWindowSize(size);
         ImGui::Begin("ArgProviderWindow", 0, _config->windowFlags);
         ImGui::Text(("Configuring " + _currentActionName + ":").c_str());
+        ImGui::Separator();
         auto updateResult = _set->UpdateActionToFill();
         if (updateResult == Cancelled || updateResult == Provided) {
             _state = Normal;

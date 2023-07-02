@@ -27,12 +27,14 @@ struct ArgProviderBase {
         ImGui::BeginChild(_name.c_str(), {windowSize.x, windowSize.y * 0.8f}, true);
         OnGuiProvide();
         ImGui::EndChild();
+        ImGui::Text("");
+        ImGui::Separator();
         auto spaceLeft = ImGui::GetContentRegionAvail();
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Escape)) ||
             ImGui::Button("Cancel [esc]", {spaceLeft.x * 0.4f, spaceLeft.y * 0.9f})) {
             _state = Cancelled;
         }
-        ImGui::SameLine(spaceLeft.x * 0.6);
+        ImGui::SameLine(spaceLeft.x * 0.6, 0.f);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Enter)) ||
             ImGui::Button("Apply [enter]", {spaceLeft.x * 0.4f, spaceLeft.y * 0.9f})) {
             _state = Provided;
@@ -184,7 +186,7 @@ struct ArgProvider<bool> : public PresetArgProvider<bool> {
     }
 
     std::string ToString(const bool &arg) override {
-        return std::to_string(arg);
+        return arg ? "TRUE" : "FALSE";
     }
 
     void ProvideFromString(const std::string &str) override {
