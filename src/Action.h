@@ -92,7 +92,9 @@ public:
         auto processor = [&state](auto &&... args) { ((ProcessArguments(state, args)), ...); };
         std::apply(processor, _args);
     	if (state == Provided || state == Cancelled) {
-			std::apply(_func, _args);
+            if (state == Provided) {
+                std::apply(_func, _args);
+            }
 			auto resetter = [](auto &&... args) { ((ResetArguments(args)), ...); };
             std::apply(resetter, _args);
         }
