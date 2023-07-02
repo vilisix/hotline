@@ -34,7 +34,11 @@ namespace Hotline {
         ImGui::Text(_config->header.c_str());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::SetWindowFontScale(_config->windowFontScale);
-        ImGui::InputText("hotline", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), _config->inputTextFlags);
+        ImGui::InputText("hotlineInput", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), _config->inputTextFlags);
+
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::Text(GetHeader().c_str());
+        ImGui::SetWindowFontScale(_config->windowFontScale);
 
         HandleTextInput(_inputBuffer);
         DrawVariants(GetCurrentVariantContainer());
@@ -56,7 +60,13 @@ namespace Hotline {
         return _input.empty() ? _recentCommands : _queryVariants;
     }
 
-    void Hotline::Reset() {
+	std::string& Hotline::GetHeader() {
+        if(!_queryVariants.empty()) return _config->listHeaderSearch;
+        if(_config->showRecentActions && !_recentCommands.empty()) return _config->listHeaderRecents;
+        return _config->listHeaderNone;
+	}
+
+	void Hotline::Reset() {
         _input.clear();
         _prevActionName.clear();
         _currentActionName.clear();
@@ -199,20 +209,26 @@ namespace Hotline {
                 }
             }
         }
-        for (int i = 0; i < variant.actionArguments.size(); i++) {
-            float offsetFromStart = i == 0 ? childSize.x * 0.4f : 0.f;
-            ImGui::SameLine(offsetFromStart, 0);
-            ImGui::Text("[");
-            ImGui::SameLine(0, 0);
-            ImGui::TextColored(_config->variantArgumentsColor, variant.actionArguments[i].c_str());
-            if (i < _actionArguments.size()) {
-                ImGui::SameLine(0, 0);
-                ImGui::Text(":");
-                ImGui::SameLine(0, 0);
-                ImGui::TextColored(_config->variantInputColor, _actionArguments[i].c_str());
-            }
-            ImGui::SameLine(0, 0);
-            ImGui::Text("]");
-        }
+		if (_currentActionName.size() < _input.size())
+		{
+			for (int i = 0; i < variant.actionArguments.size(); i++)
+			{
+				float offsetFromStart = i == 0 ? childSize.x * 0.4f : 0.f;
+				ImGui::SameLine(offsetFromStart, 0);
+				ImGui::TextColored(_config->variantArgumentsColor, "[");
+				ImGui::SameLine(0, 0);
+				ImGui::TextColored(_config->variantArgumentsColor, variant.actionArguments[i].c_str());
+				if (i < _actionArguments.size())
+				{
+					ImGui::SameLine(0, 0);
+					ImGui::Text(":");
+					ImGui::SameLine(0, 0);
+					ImGui::TextColored(_config->variantInputColor, _actionArguments[i].c_str());
+				}
+				ImGui::SameLine(0, 0);
+				ImGui::TextColored(_config->variantArgumentsColor, "]");
+			}
+		}
+        
     }
 }

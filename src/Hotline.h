@@ -26,6 +26,9 @@ namespace Hotline {
                                        | ImGuiWindowFlags_AlwaysAutoResize
                                        | ImGuiWindowFlags_NoScrollbar;
         std::string header = "hotline";
+        std::string listHeaderRecents = "history:";
+        std::string listHeaderSearch = "fuzzy search:";
+        std::string listHeaderNone = "lightweight framework for fast action executing";
         float windowFontScale = 1.4f;
         //  input
         ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EscapeClearsAll;
@@ -37,7 +40,7 @@ namespace Hotline {
                                         | ImGuiWindowFlags_AlwaysAutoResize;
         float variantTextHorOffset = 5.f;
         ImVec4 variantMatchLettersColor = {0.996f, 0.447f, 0.298f, 1.0f};
-        ImVec4 variantArgumentsColor = {0.996f, 0.447f, 0.298f, 1.0f};
+        ImVec4 variantArgumentsColor = {0.749f, 0.855f, 0.655f, 0.4f};
         ImVec4 variantInputColor = {0.749f, 0.855f, 0.655f, 1.0f};
     };
 
@@ -55,6 +58,7 @@ namespace Hotline {
 
     private:
         std::vector<ActionVariant> &GetCurrentVariantContainer();
+		std::string& GetHeader();
 
         void Reset();
 

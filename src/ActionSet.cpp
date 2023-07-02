@@ -26,10 +26,11 @@ namespace Hotline {
         std::vector<ActionVariant> result;
 
         if (query.empty()) {
-            for (auto &action: _actions) {
-                result.push_back({action.first, action.second->GetArguments(), {0, {}}});
-            }
-            return std::move(result);
+            // for (auto &action: _actions) {
+            //     result.push_back({action.first, action.second->GetArguments(), {0, {}}});
+            // }
+            // return std::move(result);
+            return result;
         }
 
         for (auto &action: _actions) {
