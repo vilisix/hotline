@@ -4,13 +4,13 @@
 #include <string>
 
 enum ActionStartResult {
-	Success,
+    Success,
     Failure
 };
 
 enum ArgumentProvidingState {
     InProgress,
-	Provided,
+    Provided,
     Cancelled
 };
 
@@ -22,12 +22,12 @@ void FillArgumentName(std::vector<std::string> &argVector, T &arg, Args &&... ar
     FillArgumentName(argVector, args...);
 };
 
-inline void ProcessArguments(ArgumentProvidingState& state) { state = Provided; }
+inline void ProcessArguments(ArgumentProvidingState &state) { state = Provided; }
 
 template<typename T, typename... Args>
-void ProcessArguments(ArgumentProvidingState& state, T &arg, Args &&... args) {
-    if(state == InProgress || state == Cancelled) return;
-	state = arg.Provide();
+void ProcessArguments(ArgumentProvidingState &state, T &arg, Args &&... args) {
+    if (state == InProgress || state == Cancelled) return;
+    state = arg.Provide();
 };
 
 inline void ProcessStringArguments(int idx, const std::vector<std::string> &stringArgs) {}
@@ -91,11 +91,11 @@ public:
         auto state = ArgumentProvidingState::Provided;
         auto processor = [&state](auto &&... args) { ((ProcessArguments(state, args)), ...); };
         std::apply(processor, _args);
-    	if (state == Provided || state == Cancelled) {
+        if (state == Provided || state == Cancelled) {
             if (state == Provided) {
                 std::apply(_func, _args);
             }
-			auto resetter = [](auto &&... args) { ((ResetArguments(args)), ...); };
+            auto resetter = [](auto &&... args) { ((ResetArguments(args)), ...); };
             std::apply(resetter, _args);
         }
         return state;
@@ -114,7 +114,7 @@ public:
             return ActionStartResult::Success;
         }
 
-    	return ActionStartResult::Failure;
+        return ActionStartResult::Failure;
     }
 
 private:

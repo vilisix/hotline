@@ -10,7 +10,7 @@ namespace Hotline {
     class ActionSet;
 
     enum State {
-	    Normal,
+        Normal,
         WaitingForAction
     };
 
@@ -30,7 +30,7 @@ namespace Hotline {
                                        | ImGuiWindowFlags_NoMove
                                        | ImGuiWindowFlags_AlwaysAutoResize
                                        | ImGuiWindowFlags_NoScrollbar
-    								   | ImGuiWindowFlags_NoNav;
+                                       | ImGuiWindowFlags_NoNav;
         std::string header = "hotline";
         std::string listHeaderRecents = "history:";
         std::string listHeaderSearch = "fuzzy search:";
@@ -69,10 +69,12 @@ namespace Hotline {
 
     private:
         void NormalUpdate();
+
         void WaitingForActionUpdate();
 
         std::vector<ActionVariant> &GetCurrentVariantContainer();
-		std::string& GetHeader();
+
+        std::string &GetHeader();
 
         void Reset();
 

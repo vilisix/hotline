@@ -15,21 +15,21 @@ namespace Hotline {
         if (auto found = _actions.find(name); found != _actions.end()) {
             result = found->second->Start(args);
             if (result == ActionStartResult::Failure) {
-	            _currentActionToFill = found->second.get();
+                _currentActionToFill = found->second.get();
             }
         }
         return result;
     }
 
-	ArgumentProvidingState ActionSet::UpdateActionToFill() {
+    ArgumentProvidingState ActionSet::UpdateActionToFill() {
         auto result = _currentActionToFill->UpdateProviding();
         if (result == Provided || result == Cancelled) {
             _currentActionToFill = nullptr;
         }
         return result;
-	}
+    }
 
-	std::vector<ActionVariant> ActionSet::FindVariants(const std::string &query) {
+    std::vector<ActionVariant> ActionSet::FindVariants(const std::string &query) {
         std::vector<ActionVariant> result;
 
         if (query.empty()) {
