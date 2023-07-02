@@ -3,6 +3,17 @@
 #include <vector>
 #include <string>
 
+enum ActionStartResult {
+	Success,
+    Failure
+};
+
+enum ArgumentProvidingState {
+    InProgress,
+	Provided,
+    Cancelled
+};
+
 inline void FillArgumentName(std::vector<std::string> &argVector) {}
 
 template<typename T, typename... Args>
@@ -11,12 +22,12 @@ void FillArgumentName(std::vector<std::string> &argVector, T &arg, Args &&... ar
     FillArgumentName(argVector, args...);
 };
 
-inline void ProcessArguments() {}
+inline void ProcessArguments(ArgumentProvidingState& state) { state = Provided; }
 
 template<typename T, typename... Args>
-void ProcessArguments(T &arg, Args &&... args) {
-    arg.Provide();
-    ProcessArguments(args...);
+void ProcessArguments(ArgumentProvidingState& state, T &arg, Args &&... args) {
+    if(state == InProgress || state == Cancelled) return;
+	state = arg.Provide();
 };
 
 inline void ProcessStringArguments(int idx, const std::vector<std::string> &stringArgs) {}
@@ -24,8 +35,16 @@ inline void ProcessStringArguments(int idx, const std::vector<std::string> &stri
 template<typename T, typename... Args>
 void ProcessStringArguments(int idx, const std::vector<std::string> &stringArgs, T &arg,
                             Args &&... args) {
-    arg.ProvideStr(stringArgs[idx]);
+    arg.ProvideFromString(stringArgs[idx]);
     ProcessStringArguments(idx++, stringArgs, args...);
+}
+
+inline void ResetArguments() {}
+
+template<typename T, typename... Args>
+void ResetArguments(T &arg, Args &&... args) {
+    arg.Reset();
+    ResetArguments(args...);
 }
 
 class BaseAction {
@@ -34,9 +53,9 @@ public:
 
     virtual ~BaseAction() = default;
 
-    virtual void Start() {}
+    virtual ArgumentProvidingState UpdateProviding() = 0;
 
-    virtual void Start(const std::vector<std::string> &stringArgs) {}
+    virtual ActionStartResult Start(const std::vector<std::string> &stringArgs) = 0;
 
     virtual std::string &GetName() = 0;
 
@@ -68,21 +87,32 @@ public:
         return _stringArgs;
     }
 
-    void Start() override {
-        auto processor = [](auto &&... args) { ((ProcessArguments(args)), ...); };
+    ArgumentProvidingState UpdateProviding() override {
+        auto state = ArgumentProvidingState::Provided;
+        auto processor = [&state](auto &&... args) { ((ProcessArguments(state, args)), ...); };
         std::apply(processor, _args);
-        std::apply(_func, _args);
+    	if (state == Provided || state == Cancelled) {
+			std::apply(_func, _args);
+			auto resetter = [](auto &&... args) { ((ResetArguments(args)), ...); };
+            std::apply(resetter, _args);
+        }
+        return state;
     }
 
-    void Start(const std::vector<std::string> &stringArgs) override {
+    ActionStartResult Start(const std::vector<std::string> &stringArgs) override {
         if (_size <= stringArgs.size()) {
             int idx = 0;
             auto processor = [&](auto &&... args) { ((ProcessStringArguments(idx, stringArgs, args), idx++), ...); };
             std::apply(processor, _args);
             std::apply(_func, _args);
-        } else {
-            Start();
+
+            auto resetter = [](auto &&... args) { ((ResetArguments(args)), ...); };
+            std::apply(resetter, _args);
+            // todo handle wrong argument providing
+            return ActionStartResult::Success;
         }
+
+    	return ActionStartResult::Failure;
     }
 
 private:

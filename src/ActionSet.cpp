@@ -10,19 +10,26 @@ namespace Hotline {
     ActionSet::ActionSet()
             : _scorer(std::make_unique<FuzzyScorer>()) {}
 
-    void ActionSet::ExecuteAction(const std::string &name) {
+    ActionStartResult ActionSet::ExecuteAction(const std::string &name, const std::vector<std::string> &args) {
+        ActionStartResult result = Success;
         if (auto found = _actions.find(name); found != _actions.end()) {
-            found->second->Start();
+            result = found->second->Start(args);
+            if (result == ActionStartResult::Failure) {
+	            _currentActionToFill = found->second.get();
+            }
         }
+        return result;
     }
 
-    void ActionSet::ExecuteAction(const std::string &name, const std::vector<std::string> &args) {
-        if (auto found = _actions.find(name); found != _actions.end()) {
-            found->second->Start(args);
+	ArgumentProvidingState ActionSet::UpdateActionToFill() {
+        auto result = _currentActionToFill->UpdateProviding();
+        if (result == Provided || result == Cancelled) {
+            _currentActionToFill = nullptr;
         }
-    }
+        return result;
+	}
 
-    std::vector<ActionVariant> ActionSet::FindVariants(const std::string &query) {
+	std::vector<ActionVariant> ActionSet::FindVariants(const std::string &query) {
         std::vector<ActionVariant> result;
 
         if (query.empty()) {

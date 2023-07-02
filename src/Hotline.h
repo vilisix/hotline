@@ -9,6 +9,11 @@
 namespace Hotline {
     class ActionSet;
 
+    enum State {
+	    Normal,
+        WaitingForAction
+    };
+
     struct Config {
         //  main
         ImGuiKey toggleKey = ImGuiKey_F1;
@@ -24,7 +29,8 @@ namespace Hotline {
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar
                                        | ImGuiWindowFlags_NoMove
                                        | ImGuiWindowFlags_AlwaysAutoResize
-                                       | ImGuiWindowFlags_NoScrollbar;
+                                       | ImGuiWindowFlags_NoScrollbar
+    								   | ImGuiWindowFlags_NoNav;
         std::string header = "hotline";
         std::string listHeaderRecents = "history:";
         std::string listHeaderSearch = "fuzzy search:";
@@ -40,8 +46,13 @@ namespace Hotline {
                                         | ImGuiWindowFlags_AlwaysAutoResize;
         float variantTextHorOffset = 5.f;
         ImVec4 variantMatchLettersColor = {0.996f, 0.447f, 0.298f, 1.0f};
-        ImVec4 variantArgumentsColor = {0.749f, 0.855f, 0.655f, 0.4f};
+        ImVec4 variantArgumentsColor = {0.749f, 0.855f, 0.655f, 0.6f};
         ImVec4 variantInputColor = {0.749f, 0.855f, 0.655f, 1.0f};
+
+        //provider window
+        ImVec2 providerWindowPos = {0.5f, 0.5f};   // relative to display size
+        ImVec2 providerWindowPivot = {0.5f, 0.5f};
+        ImVec2 providerWindowSize = {0.5f, 0.5f};  // relative to display size
     };
 
     class Hotline {
@@ -57,6 +68,9 @@ namespace Hotline {
         virtual void Toggle();
 
     private:
+        void NormalUpdate();
+        void WaitingForActionUpdate();
+
         std::vector<ActionVariant> &GetCurrentVariantContainer();
 		std::string& GetHeader();
 
@@ -72,6 +86,7 @@ namespace Hotline {
 
         void DrawVariant(const ActionVariant &variant);
 
+        State _state = Normal;
         std::shared_ptr<ActionSet> _set;
         std::unique_ptr<Config> _config;
 

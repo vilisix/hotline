@@ -26,14 +26,14 @@ namespace Hotline {
                     (name, std::forward<F>(f), std::forward<Args>(args)...);
         }
 
-        void ExecuteAction(const std::string &name);
-
-        void ExecuteAction(const std::string &name, const std::vector<std::string> &args);
+        ActionStartResult ExecuteAction(const std::string &name, const std::vector<std::string> &args);
+        ArgumentProvidingState UpdateActionToFill();
 
         std::vector<ActionVariant> FindVariants(const std::string &query);
 
     private:
         std::map<std::string, std::unique_ptr<BaseAction>> _actions;
+        BaseAction* _currentActionToFill = nullptr;
         std::unique_ptr<FuzzyScorer> _scorer;
     };
 }
