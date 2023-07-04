@@ -86,8 +86,10 @@ int main(int, char **) {
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
-
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "hotline example", nullptr, nullptr);
+    int width = 1920;
+    int height = 900;
+    float scaleFactor = (width / 1280.f) * (height / 720.f);
+    GLFWwindow *window = glfwCreateWindow(width, height, "hotline example", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -103,7 +105,6 @@ int main(int, char **) {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 
-
     //  test action set for understanding how it works
     auto actionSet = std::make_shared<Hotline::ActionSet>();
 
@@ -112,7 +113,7 @@ int main(int, char **) {
                          ArgProvider<std::string>("Name"));
     actionSet->AddAction("testTwoPar", testFunctionTwoPar,
                          ArgProvider<std::string>("Name"),
-                         ArgProvider<int>("Level"));
+                         ArgProvider<unsigned>("Level"));
     actionSet->AddAction("testThreePar", testFunctionThreePar,
                          ArgProvider<std::string>("Name"),
                          ArgProvider<int>("Level"),
@@ -120,6 +121,7 @@ int main(int, char **) {
 
     //  instantiation of hotline
     auto hotlineConfig = std::make_unique<Hotline::Config>();
+    hotlineConfig->scaleFactor = scaleFactor;
     hotlineConfig->showRecentActions = true;
     // you can modify config as you like here
     auto hotline = std::make_unique<Hotline::Hotline>(actionSet, std::move(hotlineConfig));
@@ -150,6 +152,7 @@ int main(int, char **) {
                                       | ImGuiWindowFlags_NoMove
                                       | ImGuiWindowFlags_AlwaysAutoResize
                                       | ImGuiWindowFlags_NoScrollbar);
+        ImGui::SetWindowFontScale(scaleFactor);
         ImGui::Text("Press F1 to open hotline");
         ImGui::Separator();
         for (const auto &message: infoMessages) {

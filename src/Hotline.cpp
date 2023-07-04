@@ -49,17 +49,17 @@ namespace Hotline {
         ImGui::SetKeyboardFocusHere();
         ImGui::Text(_config->header.c_str());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-        ImGui::SetWindowFontScale(_config->windowFontScale);
+        ImGui::SetWindowFontScale(_config->windowFontScale * _config->scaleFactor);
         ImGui::InputText("hotlineInput", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), _config->inputTextFlags);
 
-        ImGui::SetWindowFontScale(1.0f);
+        ImGui::SetWindowFontScale(_config->windowHeaderScale * _config->scaleFactor);
         ImGui::Text(GetHeader().c_str());
-        ImGui::SetWindowFontScale(_config->windowFontScale);
+        ImGui::SetWindowFontScale(_config->windowFontScale * _config->scaleFactor);
 
         HandleTextInput(_inputBuffer);
         DrawVariants(GetCurrentVariantContainer());
 
-        ImGui::SetWindowFontScale(1.0f);
+        ImGui::SetWindowFontScale(_config->windowHeaderScale * _config->scaleFactor);
         ImGui::PopStyleVar(3);
         ImGui::End();
 	}
@@ -75,8 +75,8 @@ namespace Hotline {
         ImGui::SetNextWindowPos(position, ImGuiCond_Always, _config->providerWindowPivot);
         ImGui::SetNextWindowSize(size);
         ImGui::Begin("ArgProviderWindow", 0, _config->windowFlags);
+        ImGui::SetWindowFontScale(_config->scaleFactor);
         ImGui::Text(("Configuring " + _currentActionName + ":").c_str());
-        ImGui::Separator();
         auto updateResult = _set->UpdateActionToFill();
         if (updateResult == Cancelled || updateResult == Provided) {
             _state = Normal;

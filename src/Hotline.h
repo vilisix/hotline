@@ -20,12 +20,13 @@ namespace Hotline {
         bool showRecentActions = false;
 
         //  window
+        float scaleFactor = 1.0f;
         float windowRounding = 10.0f;
         float frameRounding = 5.0f;
         float childRounding = 8.0f;
-        ImVec2 windowPos = {0.5f, 0.25f};   // relative to display size
+        ImVec2 windowPos = {0.5f, 0.2f};   // relative to display size
         ImVec2 windowPivot = {0.5f, 0.f};
-        ImVec2 windowSize = {0.5f, 0.f};  // relative to display size
+        ImVec2 windowSize = {0.75f, 0.f};  // relative to display size
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar
                                        | ImGuiWindowFlags_NoMove
                                        | ImGuiWindowFlags_AlwaysAutoResize
@@ -35,6 +36,7 @@ namespace Hotline {
         std::string listHeaderRecents = "history:";
         std::string listHeaderSearch = "fuzzy search:";
         std::string listHeaderNone = "lightweight framework for fast action executing";
+        float windowHeaderScale = 1.0f;
         float windowFontScale = 1.4f;
         //  input
         ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EscapeClearsAll;
@@ -52,7 +54,7 @@ namespace Hotline {
         //provider window
         ImVec2 providerWindowPos = {0.5f, 0.5f};   // relative to display size
         ImVec2 providerWindowPivot = {0.5f, 0.5f};
-        ImVec2 providerWindowSize = {0.5f, 0.5f};  // relative to display size
+        ImVec2 providerWindowSize = {0.75f, 0.75f};  // relative to display size
     };
 
     class Hotline {

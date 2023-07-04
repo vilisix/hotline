@@ -14,6 +14,8 @@ struct ArgProviderBase {
     bool _canCaptureInput = false;
     ImVec4 _colorSelected = {0.749f, 0.855f, 0.655f, 0.6f};
     ImVec4 _colorDefault = {0.749f, 0.855f, 0.655f, 0.3f};
+    ImVec4 _colorCancel = {0.957f, 0.514f, 0.49f, 1.0f};
+    ImVec4 _colorApply = {0.6f, 0.822f, 0.596f, 1.0f};
 
     explicit ArgProviderBase(std::string name) : _name(std::move(name)) {}
 
@@ -21,25 +23,32 @@ struct ArgProviderBase {
 
     ArgumentProvidingState Provide() {
         if (_state == Provided) return _state;
-
-        ImGui::Text(("\nProvide value for " + _name).c_str());
+        ImGui::SameLine();
+        ImGui::Text("Provide value for ");
+        ImGui::SameLine(0,0);
+        ImGui::TextColored(_colorCancel, _name.c_str());
         auto windowSize = ImGui::GetContentRegionAvail();
         ImGui::BeginChild(_name.c_str(), {windowSize.x, windowSize.y * 0.8f}, true);
         OnGuiProvide();
         ImGui::EndChild();
-        ImGui::Text("");
-        ImGui::Separator();
+        auto spaceForFooter = ImGui::GetContentRegionAvail();
+        ImGui::BeginChild("footer", spaceForFooter, true);
         auto spaceLeft = ImGui::GetContentRegionAvail();
+        ImGui::PushStyleColor(ImGuiCol_Button, _colorCancel);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Escape)) ||
-            ImGui::Button("Cancel [esc]", {spaceLeft.x * 0.4f, spaceLeft.y * 0.9f})) {
+            ImGui::Button("Cancel [esc]", {spaceLeft.x * 0.25f, spaceLeft.y})) {
             _state = Cancelled;
         }
-        ImGui::SameLine(spaceLeft.x * 0.6, 0.f);
+        ImGui::PopStyleColor();
+        ImGui::SameLine(spaceLeft.x * 0.75, 0.f);
+        ImGui::PushStyleColor(ImGuiCol_Button, _colorApply);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Enter)) ||
-            ImGui::Button("Apply [enter]", {spaceLeft.x * 0.4f, spaceLeft.y * 0.9f})) {
+            ImGui::Button("Apply [enter]", {spaceLeft.x * 0.25f, spaceLeft.y})) {
             _state = Provided;
             OnApply();
         }
+        ImGui::PopStyleColor();
+        ImGui::EndChild();
 
         //todo handle input properly
         if (!_canCaptureInput && !ImGui::IsKeyDown(ImGuiKey_Enter) && !ImGui::IsKeyDown(ImGuiKey_Escape)) {
@@ -149,11 +158,27 @@ struct ArgProvider : public PresetArgProvider<T> {
 template<>
 struct ArgProvider<int> : public PresetArgProvider<int> {
     explicit ArgProvider(std::string name) : PresetArgProvider<int>(name) {
-        _presets = {{1,  100,  1000,  10000},
-                    {-1, -100, -1000, -10000}};
+        _presets = {{1, 100, 1000, 10000},
+						{-1, -100, -1000, -10000}};
     }
 
     std::string ToString(const int &arg) override {
+        return std::to_string(arg);
+    }
+
+    void ProvideFromString(const std::string &str) override {
+        _arg = atoi(str.c_str());
+    }
+};
+
+template<>
+struct ArgProvider<unsigned> : public PresetArgProvider<unsigned> {
+    explicit ArgProvider(std::string name) : PresetArgProvider<unsigned>(name) {
+        _presets = {{1,  100, 1000, 10000},
+						{10, 500, 5000, 50000}};
+    }
+
+    std::string ToString(const unsigned &arg) override {
         return std::to_string(arg);
     }
 
