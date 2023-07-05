@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
+string(COMPARE EQUAL "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" HOTLINE_STANDALONE)
+option(HOTLINE_BUILD_EXAMPLES "Build hotline examples" ${HOTLINE_STANDALONE})
+
 #glfw
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -43,11 +46,11 @@ target_include_directories( IMGUI
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/backends)
 
-## Create main executable
-add_executable(main src/main.cpp src/Action.h src/ArgProvider.h)
-
-target_sources( main
-                PUBLIC
+add_library(hotline STATIC)
+target_sources( hotline
+                PRIVATE
+				src/Action.h 
+				src/ArgProvider.h
                 src/ActionSet.h
                 src/ActionSet.cpp
                 src/FuzzyScorer.h
@@ -59,11 +62,17 @@ target_sources( main
 find_package(OpenGL REQUIRED)
     target_link_libraries(IMGUI PUBLIC ${OPENGL_LIBRARIES})
 
-target_link_libraries(
-  main
-  PUBLIC
-    glfw
-    IMGUI
-)
+if (HOTLINE_BUILD_EXAMPLES)
+    ## Create main executable
+	add_executable(hotline_example src/main.cpp)
+	
+	target_link_libraries(
+	  hotline_example
+	  PUBLIC
+		hotline
+		glfw
+		IMGUI
+	)
+endif()
 
 
