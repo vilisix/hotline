@@ -10,7 +10,8 @@ namespace Hotline {
     class ActionSet;
 
     enum State {
-        Normal,
+        Inactive,
+    	Active,
         WaitingForAction
     };
 
@@ -59,7 +60,7 @@ namespace Hotline {
 
     class Hotline {
     public:
-        Hotline(std::shared_ptr<ActionSet> set);
+		explicit Hotline(std::shared_ptr<ActionSet> set);
 
         Hotline(std::shared_ptr<ActionSet> set, std::unique_ptr<Config> config);
 
@@ -72,7 +73,7 @@ namespace Hotline {
     private:
         void NormalUpdate();
 
-        void WaitingForActionUpdate();
+        void ActionUpdate();
 
         std::vector<ActionVariant> &GetCurrentVariantContainer();
 
@@ -90,11 +91,10 @@ namespace Hotline {
 
         void DrawVariant(const ActionVariant &variant);
 
-        State _state = Normal;
+        State _state = Inactive;
         std::shared_ptr<ActionSet> _set;
         std::unique_ptr<Config> _config;
 
-        bool _isActive = false;
         int _selectionIndex = 0;
 
         char _inputBuffer[128] = "";

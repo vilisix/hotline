@@ -14,17 +14,17 @@ namespace Hotline {
             : _set(std::move(set)), _config(std::move(config)) {}
 
     void Hotline::Update() {
-        if (_state == Normal) {
+        if (_state != WaitingForAction) {
             NormalUpdate();
         }else if (_state == WaitingForAction) {
-            WaitingForActionUpdate();
+            ActionUpdate();
         }
-        
     }
 
     void Hotline::Toggle() {
-        _isActive = !_isActive;
-        if (_isActive) {
+        if(_state == Inactive) _state = Active;
+        else if(_state == Active) _state = Inactive;
+        if (_state == Active) {
 			Reset();
         }
     }
@@ -32,7 +32,7 @@ namespace Hotline {
 	void Hotline::NormalUpdate() {
         HandleKeyInput();
 
-        if (!_isActive) {
+        if (_state == Inactive) {
             return;
         }
 
@@ -64,7 +64,7 @@ namespace Hotline {
         ImGui::End();
 	}
 
-	void Hotline::WaitingForActionUpdate() {
+	void Hotline::ActionUpdate() {
         ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, _config->childRounding);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, _config->frameRounding);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, _config->windowRounding);
@@ -79,7 +79,7 @@ namespace Hotline {
         ImGui::Text(("Configuring " + _currentActionName + ":").c_str());
         auto updateResult = _set->UpdateActionToFill();
         if (updateResult == Cancelled || updateResult == Provided) {
-            _state = Normal;
+            _state = Inactive;
         }
         ImGui::End();
 
@@ -114,7 +114,7 @@ namespace Hotline {
             Toggle();
         }
 
-        if (!_isActive) {
+        if (_state == Inactive) {
             return;
         }
 
