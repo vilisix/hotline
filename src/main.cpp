@@ -86,8 +86,8 @@ int main(int, char **) {
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
-    int width = 1920;
-    int height = 900;
+    int width = 1600;
+    int height = 800;
     float scaleFactor = (width / 1280.f) * (height / 720.f);
     GLFWwindow *window = glfwCreateWindow(width, height, "hotline example", nullptr, nullptr);
     if (window == nullptr)
@@ -108,13 +108,13 @@ int main(int, char **) {
     //  test action set for understanding how it works
     auto actionSet = std::make_shared<Hotline::ActionSet>();
 
-    actionSet->AddAction("testZeroPar", testFunctionZeroPar);
-    actionSet->AddAction("testOnePar", testFunctionOnePar,
+    actionSet->AddAction("ZeroParFunction", testFunctionZeroPar);
+    actionSet->AddAction("OneParFunction", testFunctionOnePar,
                          ArgProvider<std::string>("Name"));
-    actionSet->AddAction("testTwoPar", testFunctionTwoPar,
+    actionSet->AddAction("TwoParFunction", testFunctionTwoPar,
                          ArgProvider<std::string>("Name"),
                          ArgProvider<unsigned>("Level"));
-    actionSet->AddAction("testThreePar", testFunctionThreePar,
+    actionSet->AddAction("ThreeParFunction", testFunctionThreePar,
                          ArgProvider<std::string>("Name"),
                          ArgProvider<int>("Level"),
                          ArgProvider<bool>("IsActive"));
