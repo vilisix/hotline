@@ -27,8 +27,10 @@ namespace Hotline {
         }
 
         ActionStartResult ExecuteAction(const std::string &name, const std::vector<std::string> &args);
+        ActionStartResult ExecuteAction(const std::string &actionString);
 
         ArgumentProvidingState UpdateActionToFill();
+        bool HaveActionToFill();
 
         std::vector<ActionVariant> FindVariants(const std::string &query);
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 #include "FuzzyScorer.h"
 
@@ -58,5 +59,24 @@ namespace Hotline {
                   [](ActionVariant &a, ActionVariant &b) { return a.fuzzyResult.score > b.fuzzyResult.score; });
 
         return std::move(result);
+    }
+
+    ActionStartResult ActionSet::ExecuteAction(const std::string &actionString) {
+        //todo several actions with ; symbol?
+        std::istringstream iss(actionString);
+        std::string actionName;
+        std::getline(iss, actionName, ' ');
+
+        std::vector<std::string> parsedArgs;
+        std::string argument;
+        while (std::getline(iss, argument, ' ')) {
+            parsedArgs.push_back(argument);
+        }
+
+        return ExecuteAction(actionName, parsedArgs);
+    }
+
+    bool ActionSet::HaveActionToFill() {
+        return _currentActionToFill != nullptr;
     }
 }
