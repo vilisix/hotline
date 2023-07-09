@@ -6,16 +6,30 @@
 #include <type_traits>
 #include <imgui.h>
 
+struct ArgProviderConfig {
+	ImVec4 colorSelected = {0.2f, 0.2f, 0.4f, 1.0f};
+    ImVec4 colorDefault = {0.25f, 0.25f, 0.25f, 1.0f};
+    ImVec4 colorHovered = {0.3f, 0.3f, 0.3f, 1.0f};
+    ImVec4 exitButtonColor = {0.8f, 0.2f, 0.25f, 0.8f};
+	ImVec4 exitButtonHoveredColor = {0.8f, 0.2f, 0.25f, 1.0f};
+    ImVec4 applyButtonColor = {0.31f, 0.8f, 0.36f, 0.8f};
+    ImVec4 applyButtonHoveredColor = {0.31f, 0.8f, 0.36f, 1.0f};
+
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar
+                                       | ImGuiWindowFlags_NoMove
+                                       | ImGuiWindowFlags_AlwaysAutoResize
+                                       | ImGuiWindowFlags_NoScrollbar
+                                       | ImGuiWindowFlags_NoNav;
+};
+
+static ArgProviderConfig argConfig;
+
 template<typename T>
 struct ArgProviderBase {
     T _arg;
     std::string _name;
     ArgumentProvidingState _state = InProgress;
     bool _canCaptureInput = false;
-    ImVec4 _colorSelected = {0.749f, 0.855f, 0.655f, 0.6f};
-    ImVec4 _colorDefault = {0.749f, 0.855f, 0.655f, 0.3f};
-    ImVec4 _colorCancel = {0.957f, 0.514f, 0.49f, 1.0f};
-    ImVec4 _colorApply = {0.6f, 0.822f, 0.596f, 1.0f};
 
     explicit ArgProviderBase(std::string name) : _name(std::move(name)) {}
 
@@ -26,28 +40,32 @@ struct ArgProviderBase {
         ImGui::SameLine();
         ImGui::Text("Provide value for ");
         ImGui::SameLine(0,0);
-        ImGui::TextColored(_colorCancel, _name.c_str());
+        ImGui::TextColored(argConfig.applyButtonColor, _name.c_str());
         auto windowSize = ImGui::GetContentRegionAvail();
-        ImGui::BeginChild(_name.c_str(), {windowSize.x, windowSize.y * 0.8f}, true);
+        ImGui::BeginChild(_name.c_str(), {windowSize.x, windowSize.y * 0.8f}, true, argConfig.windowFlags);
         OnGuiProvide();
         ImGui::EndChild();
         auto spaceForFooter = ImGui::GetContentRegionAvail();
-        ImGui::BeginChild("footer", spaceForFooter, true);
+        ImGui::BeginChild("footer", spaceForFooter, true, argConfig.windowFlags);
         auto spaceLeft = ImGui::GetContentRegionAvail();
-        ImGui::PushStyleColor(ImGuiCol_Button, _colorCancel);
+        ImGui::PushStyleColor(ImGuiCol_Button, argConfig.exitButtonColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, argConfig.exitButtonColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, argConfig.exitButtonHoveredColor);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Escape)) ||
             ImGui::Button("Cancel [esc]", {spaceLeft.x * 0.25f, spaceLeft.y})) {
             _state = Cancelled;
         }
-        ImGui::PopStyleColor();
+        ImGui::PopStyleColor(3);
         ImGui::SameLine(spaceLeft.x * 0.75, 0.f);
-        ImGui::PushStyleColor(ImGuiCol_Button, _colorApply);
+        ImGui::PushStyleColor(ImGuiCol_Button, argConfig.applyButtonColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, argConfig.applyButtonColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, argConfig.applyButtonHoveredColor);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Enter)) ||
             ImGui::Button("Apply [enter]", {spaceLeft.x * 0.25f, spaceLeft.y})) {
             _state = Provided;
             OnApply();
         }
-        ImGui::PopStyleColor();
+        ImGui::PopStyleColor(3);
         ImGui::EndChild();
 
         //todo handle input properly
@@ -125,13 +143,16 @@ struct PresetArgProvider : public ArgProviderBase<T> {
                 if (j > 0) {
                     ImGui::SameLine();
                 }
-                auto color = (i == _presetCol && j == _presetRow) ? this->_colorSelected : this->_colorDefault;
+                auto color = (i == _presetCol && j == _presetRow) ? argConfig.colorSelected : argConfig.colorDefault;
+                auto hoveredColor = (i == _presetCol && j == _presetRow) ? argConfig.colorSelected : argConfig.colorHovered;
                 ImGui::PushStyleColor(ImGuiCol_Button, color);
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
                 if (ImGui::Button(ToString(_presets[i][j]).c_str(), buttonSize)) {
                     _presetCol = i;
                     _presetRow = j;
                 }
-                ImGui::PopStyleColor();
+                ImGui::PopStyleColor(3);
             }
         }
     }
