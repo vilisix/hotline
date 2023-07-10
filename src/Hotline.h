@@ -38,7 +38,7 @@ namespace Hotline {
         std::string listHeaderSearch = "fuzzy search:";
         std::string listHeaderNone = "lightweight framework for fast action executing";
         float windowHeaderScale = 1.0f;
-        float windowFontScale = 1.4f;
+        float windowFontScale = 1.6f;
         //  input
         ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EscapeClearsAll;
 //                                             | ImGuiInputTextFlags_AlwaysOverwrite;
@@ -55,7 +55,7 @@ namespace Hotline {
         //provider window
         ImVec2 providerWindowPos = {0.5f, 0.5f};   // relative to display size
         ImVec2 providerWindowPivot = {0.5f, 0.5f};
-        ImVec2 providerWindowSize = {0.75f, 0.75f};  // relative to display size
+        ImVec2 providerWindowSize = {0.7f, 0.5f};  // relative to display size
     };
 
     class Hotline {
@@ -69,6 +69,8 @@ namespace Hotline {
         virtual void Update();
 
         virtual void Toggle();
+
+        bool IsActive();
 
     private:
         void NormalUpdate();

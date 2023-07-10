@@ -7,13 +7,18 @@
 #include <imgui.h>
 
 struct ArgProviderConfig {
+    float scaleFactor = 1.0f;
+    float windowFontScale = 1.2f;
+    float windowHotkeyScale = 0.7f;
+
 	ImVec4 colorSelected = {0.2f, 0.2f, 0.4f, 1.0f};
     ImVec4 colorDefault = {0.25f, 0.25f, 0.25f, 1.0f};
     ImVec4 colorHovered = {0.3f, 0.3f, 0.3f, 1.0f};
     ImVec4 exitButtonColor = {0.8f, 0.2f, 0.25f, 0.8f};
-	ImVec4 exitButtonHoveredColor = {0.8f, 0.2f, 0.25f, 1.0f};
-    ImVec4 applyButtonColor = {0.31f, 0.8f, 0.36f, 0.8f};
-    ImVec4 applyButtonHoveredColor = {0.31f, 0.8f, 0.36f, 1.0f};
+	ImVec4 exitButtonHoveredColor = {0.8f, 0.2f, 0.25f, 0.95f};
+    ImVec4 applyButtonColor = {0.31f, 0.8f, 0.36f, 0.6f};
+    ImVec4 applyButtonHoveredColor = {0.31f, 0.8f, 0.36f, 0.8f};
+	ImVec4 hotkeyColor = {0.8f, 0.8f, 0.8f, 1.0f};
 
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar
                                        | ImGuiWindowFlags_NoMove
@@ -48,24 +53,47 @@ struct ArgProviderBase {
         auto spaceForFooter = ImGui::GetContentRegionAvail();
         ImGui::BeginChild("footer", spaceForFooter, true, argConfig.windowFlags);
         auto spaceLeft = ImGui::GetContentRegionAvail();
+
+        auto cursorBeforeButton = ImGui::GetCursorPos();
+
         ImGui::PushStyleColor(ImGuiCol_Button, argConfig.exitButtonColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, argConfig.exitButtonColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, argConfig.exitButtonHoveredColor);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Escape)) ||
-            ImGui::Button("Cancel [esc]", {spaceLeft.x * 0.25f, spaceLeft.y})) {
+            ImGui::Button("Cancel", {spaceLeft.x * 0.25f, spaceLeft.y})) {
             _state = Cancelled;
         }
         ImGui::PopStyleColor(3);
+
+        auto cursorPointAfterButton = ImGui::GetCursorPos();
+
+		ImGui::SetWindowFontScale(argConfig.windowHotkeyScale * argConfig.scaleFactor);
+		ImGui::SetCursorPos(cursorBeforeButton);
+		ImGui::TextColored(argConfig.hotkeyColor, ("[esc]"));
+		ImGui::SetWindowFontScale(argConfig.windowFontScale * argConfig.scaleFactor);
+		ImGui::SetCursorPos(cursorPointAfterButton);
+
         ImGui::SameLine(spaceLeft.x * 0.75, 0.f);
+        cursorBeforeButton = ImGui::GetCursorPos();
+
         ImGui::PushStyleColor(ImGuiCol_Button, argConfig.applyButtonColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, argConfig.applyButtonColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, argConfig.applyButtonHoveredColor);
         if ((_canCaptureInput && ImGui::IsKeyPressed(ImGuiKey_Enter)) ||
-            ImGui::Button("Apply [enter]", {spaceLeft.x * 0.25f, spaceLeft.y})) {
+            ImGui::Button("Apply", {spaceLeft.x * 0.25f, spaceLeft.y})) {
             _state = Provided;
             OnApply();
         }
         ImGui::PopStyleColor(3);
+
+        cursorPointAfterButton = ImGui::GetCursorPos();
+
+		ImGui::SetWindowFontScale(argConfig.windowHotkeyScale * argConfig.scaleFactor);
+		ImGui::SetCursorPos(cursorBeforeButton);
+		ImGui::TextColored(argConfig.hotkeyColor, ("[enter]"));
+		ImGui::SetWindowFontScale(argConfig.windowFontScale * argConfig.scaleFactor);
+		ImGui::SetCursorPos(cursorPointAfterButton);
+
         ImGui::EndChild();
 
         //todo handle input properly

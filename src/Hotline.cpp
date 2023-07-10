@@ -29,6 +29,10 @@ namespace Hotline {
         }
     }
 
+	bool Hotline::IsActive() {
+		return _state == WaitingForAction || _state == Active;
+	}
+
 	void Hotline::NormalUpdate() {
         HandleKeyInput();
 
@@ -75,7 +79,7 @@ namespace Hotline {
         ImGui::SetNextWindowPos(position, ImGuiCond_Always, _config->providerWindowPivot);
         ImGui::SetNextWindowSize(size);
         ImGui::Begin("ArgProviderWindow", 0, _config->windowFlags);
-        ImGui::SetWindowFontScale(_config->scaleFactor);
+		ImGui::SetWindowFontScale(_config->windowFontScale * _config->scaleFactor);
         ImGui::Text(("Configuring " + _currentActionName + ":").c_str());
         auto updateResult = _set->UpdateActionToFill();
         if (updateResult == Cancelled || updateResult == Provided) {
