@@ -211,6 +211,10 @@ struct ArgProvider<int> : public PresetArgProvider<int> {
 						{-1, -100, -1000, -10000}};
     }
 
+    ArgProvider(const std::string &name, std::vector<std::vector<int>> presetArgs) : PresetArgProvider<int>(name){
+	    _presets = presetArgs;
+    }
+
     std::string ToString(const int &arg) override {
         return std::to_string(arg);
     }
@@ -225,6 +229,10 @@ struct ArgProvider<unsigned> : public PresetArgProvider<unsigned> {
     explicit ArgProvider(std::string name) : PresetArgProvider<unsigned>(name) {
         _presets = {{1,  100, 1000, 10000},
 						{10, 500, 5000, 50000}};
+    }
+
+    ArgProvider(const std::string &name, std::vector<std::vector<unsigned>> presetArgs) : PresetArgProvider<unsigned>(name){
+	    _presets = presetArgs;
     }
 
     std::string ToString(const unsigned &arg) override {
@@ -242,6 +250,10 @@ struct ArgProvider<std::string> : public PresetArgProvider<std::string> {
         _presets = {{"one",   "two",   "three"},
                     {"four",  "five",  "six"},
                     {"seven", "eight", "nine"}};
+    }
+
+    ArgProvider(const std::string &name, std::vector<std::vector<std::string>> presetArgs) : PresetArgProvider<std::string>(name){
+	    _presets = presetArgs;
     }
 
     std::string ToString(const std::string &arg) override {
