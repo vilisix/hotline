@@ -55,7 +55,7 @@ namespace Hotline {
         //provider window
         ImVec2 providerWindowPos = {0.5f, 0.5f};   // relative to display size
         ImVec2 providerWindowPivot = {0.5f, 0.5f};
-        ImVec2 providerWindowSize = {0.7f, 0.5f};  // relative to display size
+        ImVec2 providerWindowSize = {0.7f, 0.7f};  // relative to display size
     };
 
     class Hotline {

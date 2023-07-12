@@ -11,14 +11,17 @@ struct ArgProviderConfig {
     float windowFontScale = 1.2f;
     float windowHotkeyScale = 0.7f;
 
-	ImVec4 colorSelected = {0.2f, 0.2f, 0.4f, 1.0f};
-    ImVec4 colorDefault = {0.25f, 0.25f, 0.25f, 1.0f};
-    ImVec4 colorHovered = {0.3f, 0.3f, 0.3f, 1.0f};
+	ImVec4 colorSelected = {0.2f, 0.2f, 0.4f, 0.9f};
+    ImVec4 colorDefault = {0.25f, 0.25f, 0.25f, 0.75f};
+    ImVec4 colorHovered = {0.3f, 0.3f, 0.3f, 0.9f};
     ImVec4 exitButtonColor = {0.8f, 0.2f, 0.25f, 0.8f};
 	ImVec4 exitButtonHoveredColor = {0.8f, 0.2f, 0.25f, 0.95f};
     ImVec4 applyButtonColor = {0.31f, 0.8f, 0.36f, 0.6f};
     ImVec4 applyButtonHoveredColor = {0.31f, 0.8f, 0.36f, 0.8f};
 	ImVec4 hotkeyColor = {0.8f, 0.8f, 0.8f, 1.0f};
+    float customProviderButtonWidth = 0.4f;
+    ImGuiKey customProviderButtonKey = ImGuiKey_Tab;
+    ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EscapeClearsAll;
 
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar
                                        | ImGuiWindowFlags_NoMove
@@ -35,6 +38,7 @@ struct ArgProviderBase {
     std::string _name;
     ArgumentProvidingState _state = InProgress;
     bool _canCaptureInput = false;
+    char _inputBuffer[128] = "";
 
     explicit ArgProviderBase(std::string name) : _name(std::move(name)) {}
 
@@ -47,9 +51,13 @@ struct ArgProviderBase {
         ImGui::SameLine(0,0);
         ImGui::TextColored(argConfig.applyButtonColor, _name.c_str());
         auto windowSize = ImGui::GetContentRegionAvail();
-        ImGui::BeginChild(_name.c_str(), {windowSize.x, windowSize.y * 0.8f}, true, argConfig.windowFlags);
+        ImGui::BeginChild(_name.c_str(), {windowSize.x, windowSize.y * 0.7f}, true, argConfig.windowFlags);
         OnGuiProvide();
         ImGui::EndChild();
+        ImGui::BeginChild((_name + "_custom").c_str(), {windowSize.x, windowSize.y * 0.1f}, true, argConfig.windowFlags);
+        OnCustomProvide();
+        ImGui::EndChild();
+
         auto spaceForFooter = ImGui::GetContentRegionAvail();
         ImGui::BeginChild("footer", spaceForFooter, true, argConfig.windowFlags);
         auto spaceLeft = ImGui::GetContentRegionAvail();
@@ -105,6 +113,7 @@ struct ArgProviderBase {
     }
 
     virtual void OnGuiProvide() = 0;    // imgui code for your custom provider
+    virtual void OnCustomProvide() = 0;    // imgui code for your custom provider
     virtual void OnApply() = 0;         // _arg probably should be filled here
     virtual void OnReset() = 0;
 
@@ -135,6 +144,12 @@ struct PresetArgProvider : public ArgProviderBase<T> {
     virtual ~PresetArgProvider() = default;
 
     void OnGuiProvide() override {
+        if(ImGui::IsKeyPressed(ImGuiKey_DownArrow) || ImGui::IsKeyPressed(ImGuiKey_UpArrow) ||ImGui::IsKeyPressed(ImGuiKey_RightArrow) || ImGui::IsKeyPressed(ImGuiKey_LeftArrow)){
+            if(_presetCol == -1 && _presetRow == -1){
+                _presetCol = 0;
+                _presetRow = 0;
+            }
+        }
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
             _presetCol++;
             if (_presetCol >= _presets.size()) {
@@ -185,13 +200,55 @@ struct PresetArgProvider : public ArgProviderBase<T> {
         }
     }
 
+    void OnCustomProvide() override {
+        auto providerSize = ImGui::GetContentRegionAvail();
+        bool isSelected = _presetCol == -1 && _presetRow == -1;
+        auto color = isSelected ? argConfig.colorSelected : argConfig.colorDefault;
+        auto hoveredColor = isSelected ? argConfig.colorSelected : argConfig.colorHovered;
+
+        auto cursorBeforeButton = ImGui::GetCursorPos();
+        ImGui::SetWindowFontScale(argConfig.windowHotkeyScale * argConfig.scaleFactor);
+        ImGui::TextColored(argConfig.hotkeyColor, ("[tab]"));
+        ImGui::SetWindowFontScale(argConfig.windowFontScale * argConfig.scaleFactor);
+
+        ImGui::SetCursorPos(cursorBeforeButton);
+
+        ImGui::PushStyleColor(ImGuiCol_Button, color);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
+        if (ImGui::IsKeyPressed(argConfig.customProviderButtonKey) || ImGui::Button("Custom:", {providerSize.x * argConfig.customProviderButtonWidth, providerSize.y})){
+            _presetRow = -1;
+            _presetCol = -1;
+        }
+
+        auto flags = argConfig.inputTextFlags;
+        if(isSelected){
+            flags |= ImGuiInputTextFlags_AlwaysOverwrite;
+        }else{
+            flags = ImGuiInputTextFlags_ReadOnly;
+        }
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        if (isSelected){
+            ImGui::SetKeyboardFocusHere();
+        }
+        ImGui::InputText("hotlineInput", this->_inputBuffer, IM_ARRAYSIZE(this->_inputBuffer), flags);
+
+        ImGui::PopStyleColor(3);
+    }
+
     virtual void OnApply() override {
-        this->_arg = _presets[_presetCol][_presetRow];
+        if(_presetRow > 0 && _presetCol > 0){
+            this->_arg = _presets[_presetCol][_presetRow];
+        }else{
+            ProvideFromString(this->_inputBuffer);
+        }
     }
 
     virtual void OnReset() override {
         _presetCol = 0;
         _presetRow = 0;
+        this->_inputBuffer[0] = '\0';
     }
 
     virtual std::string ToString(const T &arg) = 0;
