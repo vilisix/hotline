@@ -49,12 +49,15 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/backends)
 add_library(hotline STATIC)
 target_sources( hotline
                 PRIVATE
+				src/IActionFrontend.h
+				src/ActionManager.h
+				src/ActionManager.cpp
 				src/Action.h 
 				src/ArgProvider.h
                 src/ActionSet.h
                 src/ActionSet.cpp
-                src/FuzzyScorer.h
-                src/FuzzyScorer.cpp
+                src/search/FuzzyScorer.h
+                src/search/FuzzyScorer.cpp
                 src/Hotline.h
                 src/Hotline.cpp
                 )

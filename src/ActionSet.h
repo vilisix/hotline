@@ -5,38 +5,45 @@
 #include <map>
 #include <memory>
 
-#include "FuzzyScorer.h"
 #include "Action.h"
+#include "search/FuzzyScorer.h"
 
 namespace Hotline {
+	struct ActionVariant {
+		std::string actionName;
+		std::vector<std::string> actionArguments;
+		FuzzyScore fuzzyResult;
+	};
 
-    struct ActionVariant {
-        std::string actionName;
-        std::vector<std::string> actionArguments;
-        FuzzyScore fuzzyResult;
-    };
 
-    class ActionSet {
-    public:
-        ActionSet();
+	class ActionSet {
+	public:
+		enum State {
+			
+		};
+		ActionSet();
 
-        template<typename F, typename... Args>
-        void AddAction(const std::string &name, F &&f, Args &&... args) {
-            _actions[name] = std::make_unique<Action<std::decay_t<F>, std::remove_cv_t<std::remove_reference_t<Args>>...>>
-                    (name, std::forward<F>(f), std::forward<Args>(args)...);
-        }
+		template <typename F, typename... Args>
+		void AddAction(const std::string& name, F&& f, Args&&... args) {
+			_actions[name] = std::make_unique<Action<
+					std::decay_t<F>, std::remove_cv_t<std::remove_reference_t<Args>>...>>
+				(name, std::forward<F>(f), std::forward<Args>(args)...);
+		}
 
-        ActionStartResult ExecuteAction(const std::string &name, const std::vector<std::string> &args);
-        ActionStartResult ExecuteAction(const std::string &actionString);
+		ActionStartResult ExecuteAction(const std::string& name, const std::vector<std::string>& args);
+		ActionStartResult ExecuteAction(const std::string& actionString);
 
-        ArgumentProvidingState UpdateActionToFill();
-        bool HaveActionToFill();
+		void Update();
+		void Reset();
+		ArgumentProvidingState GetState();
 
-        std::vector<ActionVariant> FindVariants(const std::string &query);
+		std::vector<ActionVariant> FindVariants(const std::string& query);
 
-    private:
-        std::map<std::string, std::unique_ptr<BaseAction>> _actions;
-        BaseAction *_currentActionToFill = nullptr;
-        std::unique_ptr<FuzzyScorer> _scorer;
-    };
+	private:
+		std::map<std::string, std::unique_ptr<BaseAction>> _actions;
+		BaseAction* _currentActionToFill = nullptr;
+		std::unique_ptr<FuzzyScorer> _scorer;
+
+		ArgumentProvidingState _state;
+	};
 }

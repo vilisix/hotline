@@ -1,4 +1,4 @@
-#pragma onces
+#pragma once
 
 #include <vector>
 #include <string>
@@ -9,8 +9,10 @@ enum ActionStartResult {
 };
 
 enum ArgumentProvidingState {
+    None,
     InProgress,
     Provided,
+    ProvidedWithReturnRequest,
     Cancelled
 };
 

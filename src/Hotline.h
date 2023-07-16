@@ -2,18 +2,12 @@
 
 #include <memory>
 #include <string>
-#include "FuzzyScorer.h"
 #include "imgui.h"
 #include "ActionSet.h"
+#include "IActionFrontend.h"
 
 namespace Hotline {
     class ActionSet;
-
-    enum State {
-        Inactive,
-    	Active,
-        WaitingForAction
-    };
 
     struct Config {
         //  main
@@ -51,51 +45,31 @@ namespace Hotline {
         ImVec4 variantMatchLettersColor = {0.996f, 0.447f, 0.298f, 1.0f};
         ImVec4 variantArgumentsColor = {0.749f, 0.855f, 0.655f, 0.6f};
         ImVec4 variantInputColor = {0.749f, 0.855f, 0.655f, 1.0f};
-
-        //provider window
-        ImVec2 providerWindowPos = {0.5f, 0.5f};   // relative to display size
-        ImVec2 providerWindowPivot = {0.5f, 0.5f};
-        ImVec2 providerWindowSize = {0.7f, 0.7f};  // relative to display size
     };
 
-    class Hotline {
+    static Config hotlineConfig;
+
+    class Hotline : public IActionFrontend {
     public:
-		explicit Hotline(std::shared_ptr<ActionSet> set);
+		~Hotline() override = default;
 
-        Hotline(std::shared_ptr<ActionSet> set, std::unique_ptr<Config> config);
-
-        virtual ~Hotline() = default;
-
-        virtual void Update();
-
-        virtual void Toggle();
-
-        bool IsActive();
-
+        void Draw(ActionSet& set) override;
+		void Reset() override;
+        void SetExitCallback(std::function<void()> callback) override;
     private:
-        void NormalUpdate();
-
-        void ActionUpdate();
-
         std::vector<ActionVariant> &GetCurrentVariantContainer();
 
         std::string &GetHeader();
 
-        void Reset();
+        void HandleKeyInput(ActionSet& set);
 
-        void HandleKeyInput();
+        void HandleTextInput(const std::string &input, ActionSet& set);
 
-        void HandleTextInput(const std::string &input);
-
-        void HandleApplyCommand();
+        void HandleApplyCommand(ActionSet& set);
 
         void DrawVariants(const std::vector<ActionVariant> variants);
 
         void DrawVariant(const ActionVariant &variant);
-
-        State _state = Inactive;
-        std::shared_ptr<ActionSet> _set;
-        std::unique_ptr<Config> _config;
 
         int _selectionIndex = 0;
 
@@ -107,6 +81,8 @@ namespace Hotline {
 
         std::vector<ActionVariant> _queryVariants;
         std::vector<ActionVariant> _recentCommands;
+
+        std::function<void()> _onExitCallback;
 
         void SplitInput();
     };

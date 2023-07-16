@@ -4,8 +4,6 @@
 #include <functional>
 #include <sstream>
 
-#include "FuzzyScorer.h"
-
 namespace Hotline {
 
     ActionSet::ActionSet()
@@ -16,19 +14,29 @@ namespace Hotline {
         if (auto found = _actions.find(name); found != _actions.end()) {
             result = found->second->Start(args);
             if (result == ActionStartResult::Failure) {
+                _state = InProgress;
                 _currentActionToFill = found->second.get();
+            } else {
+				_state = Provided;
             }
         }
         return result;
     }
 
-    ArgumentProvidingState ActionSet::UpdateActionToFill() {
-        auto result = _currentActionToFill->UpdateProviding();
-        if (result == Provided || result == Cancelled) {
-            _currentActionToFill = nullptr;
+    void ActionSet::Update() {
+        if (_state == InProgress) {
+			_state = _currentActionToFill->UpdateProviding();
         }
-        return result;
     }
+
+	void ActionSet::Reset() {
+        _currentActionToFill = nullptr;
+        _state = None;
+	}
+
+	ArgumentProvidingState ActionSet::GetState() {
+        return _state;
+	}
 
     std::vector<ActionVariant> ActionSet::FindVariants(const std::string &query) {
         std::vector<ActionVariant> result;
@@ -74,9 +82,5 @@ namespace Hotline {
         }
 
         return ExecuteAction(actionName, parsedArgs);
-    }
-
-    bool ActionSet::HaveActionToFill() {
-        return _currentActionToFill != nullptr;
     }
 }
