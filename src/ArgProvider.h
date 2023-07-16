@@ -238,7 +238,7 @@ struct PresetArgProvider : public ArgProviderBase<T> {
     }
 
     virtual void OnApply() override {
-        if(_presetRow > 0 && _presetCol > 0){
+        if(_presetRow >= 0 && _presetCol >= 0){
             this->_arg = _presets[_presetCol][_presetRow];
         }else{
             ProvideFromString(this->_inputBuffer);

@@ -19,6 +19,7 @@
 #include <vector>
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
+#include "ActionManager.h"
 #include "ActionSet.h"
 #include "Hotline.h"
 #include "ArgProvider.h"
@@ -120,11 +121,14 @@ int main(int, char **) {
                          ArgProvider<bool>("IsActive"));
 
     //  instantiation of hotline
-    auto hotlineConfig = std::make_unique<Hotline::Config>();
-    hotlineConfig->scaleFactor = scaleFactor;
-    hotlineConfig->showRecentActions = true;
+	Hotline::hotlineConfig.scaleFactor = scaleFactor;
+    Hotline::hotlineConfig.showRecentActions = true;
     // you can modify config as you like here
-    auto hotline = std::make_unique<Hotline::Hotline>(actionSet, std::move(hotlineConfig));
+    auto hotline = std::make_unique<Hotline::Hotline>();
+
+    auto manager = std::make_unique<Hotline::ActionManager>(actionSet);
+
+    manager->AddFrontend("hotline", std::move(hotline));
 
 
     // Main loop
@@ -143,7 +147,11 @@ int main(int, char **) {
         ImGui::NewFrame();
 
         //Hotline main input and textInput update cycle
-        hotline->Update();
+        if (ImGui::IsKeyPressed(Hotline::hotlineConfig.toggleKey)) {
+	        manager->EnableFrontend("hotline");
+        }
+
+        manager->Update();
 
         //  test info window
         ImGui::SetNextWindowPos({0.f, 0.f});
