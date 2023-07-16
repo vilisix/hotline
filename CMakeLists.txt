@@ -60,6 +60,8 @@ target_sources( hotline
                 src/search/FuzzyScorer.cpp
                 src/Hotline.h
                 src/Hotline.cpp
+				src/ProviderWindow.h
+				src/ProviderWindow.cpp
                 )
 
 find_package(OpenGL REQUIRED)

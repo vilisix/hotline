@@ -5,7 +5,7 @@
 #include <iostream>
 #include "ActionSet.h"
 
-namespace Hotline {
+namespace hotline {
 	std::vector<ActionVariant> &Hotline::GetCurrentVariantContainer() {
         if (!hotlineConfig.showRecentActions) {
             return _queryVariants;

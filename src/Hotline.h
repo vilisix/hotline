@@ -6,7 +6,7 @@
 #include "ActionSet.h"
 #include "IActionFrontend.h"
 
-namespace Hotline {
+namespace hotline {
     class ActionSet;
 
     struct Config {
@@ -56,7 +56,7 @@ namespace Hotline {
         void Draw(ActionSet& set) override;
 		void Reset() override;
         void SetExitCallback(std::function<void()> callback) override;
-    private:
+    protected:
         std::vector<ActionVariant> &GetCurrentVariantContainer();
 
         std::string &GetHeader();
@@ -71,9 +71,10 @@ namespace Hotline {
 
         void DrawVariant(const ActionVariant &variant);
 
+        char _inputBuffer[128] = "";
+    private:
         int _selectionIndex = 0;
 
-        char _inputBuffer[128] = "";
         std::string _input;
         std::string _prevActionName;
         std::string _currentActionName;

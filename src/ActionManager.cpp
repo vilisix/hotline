@@ -4,75 +4,62 @@
 
 #include "ActionSet.h"
 
-Hotline::ActionManager::ActionManager(std::shared_ptr<ActionSet> set)
+hotline::ActionManager::ActionManager(std::shared_ptr<ActionSet> set)
 : _set(std::move(set)) {}
 
-void Hotline::ActionManager::Update() {
+void hotline::ActionManager::Update() {
 	auto state = _set->GetState();
 	if (state == InProgress) {
-		ActionUpdate();
-		return;
+		assert(_providerFrontend);
+		_providerFrontend->Draw(*_set);
+		return;			
 	}
 
 	if (state == Provided) {
-		_currentFrontend->Reset();
-		_currentFrontend = nullptr;
+		_currentActionFrontend->Reset();
+		_currentActionFrontend = nullptr;
 	}
 
 	if (state != None) {
 		_set->Reset();
 	}
 
-	if (_currentFrontend) {
-		_currentFrontend->Draw(*_set);
+	if (_currentActionFrontend) {
+		_currentActionFrontend->Draw(*_set);
 	}
 }
 
-void Hotline::ActionManager::EnableFrontend(const std::string& name) {
+void hotline::ActionManager::EnableFrontend(const std::string& name) {
 	if (_set->GetState() == InProgress) return;
 
-	const auto found = _frontends.find(name);
-	assert(found != _frontends.end());
+	const auto found = _actionFrontends.find(name);
+	assert(found != _actionFrontends.end());
 
-	if (found->second.get() != _currentFrontend) {
-		if (_currentFrontend) {
-			_currentFrontend->Reset();
+	if (found->second.get() != _currentActionFrontend) {
+		if (_currentActionFrontend) {
+			_currentActionFrontend->Reset();
 		}
-		_currentFrontend = found->second.get();
+		_currentActionFrontend = found->second.get();
 	}
 }
 
-void Hotline::ActionManager::Close() {
+void hotline::ActionManager::Close() {
 	if (_set->GetState() == InProgress) return;
 
-	if (_currentFrontend) {
-		_currentFrontend->Reset();
-		_currentFrontend = nullptr;
+	if (_currentActionFrontend) {
+		_currentActionFrontend->Reset();
+		_currentActionFrontend = nullptr;
 	}
 }
 
-void Hotline::ActionManager::AddFrontend(const std::string& name, std::unique_ptr<IActionFrontend> frontend) {
-	const auto found = _frontends.find(name);
-	assert(found == _frontends.end());
+void hotline::ActionManager::AddActionFrontend(const std::string& name, std::unique_ptr<IActionFrontend> frontend) {
+	const auto found = _actionFrontends.find(name);
+	assert(found == _actionFrontends.end());
 
 	frontend->SetExitCallback([&](){ Close(); });
-	_frontends[name] = std::move(frontend);
+	_actionFrontends[name] = std::move(frontend);
 }
 
-void Hotline::ActionManager::ActionUpdate() {
-	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, providerConfig.childRounding);
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, providerConfig.frameRounding);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, providerConfig.windowRounding);
-
-    auto io = ImGui::GetIO();
-    ImVec2 position{io.DisplaySize.x * providerConfig.providerWindowPos.x, io.DisplaySize.y * providerConfig.providerWindowPos.y};
-    ImVec2 size{io.DisplaySize.x * providerConfig.providerWindowSize.x, io.DisplaySize.y * providerConfig.providerWindowSize.y};
-    ImGui::SetNextWindowPos(position, ImGuiCond_Always, providerConfig.providerWindowPivot);
-    ImGui::SetNextWindowSize(size);
-    ImGui::Begin("ArgProviderWindow", 0, providerConfig.windowFlags);
-	ImGui::SetWindowFontScale(providerConfig.windowFontScale * providerConfig.scaleFactor);
-    _set->Update();
-    ImGui::End();
-
-    ImGui::PopStyleVar(3);
+void hotline::ActionManager::SetProviderFrontend(std::unique_ptr<IProviderFrontend> frontend) {
+	_providerFrontend = std::move(frontend);
 }

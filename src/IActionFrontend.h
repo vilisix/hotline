@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 
-namespace Hotline {
+namespace hotline {
 	class ActionSet;
 
 	class IActionFrontend {
@@ -11,5 +11,12 @@ namespace Hotline {
 		virtual void Draw(ActionSet& set) = 0;
 		virtual void Reset() = 0;
 		virtual void SetExitCallback(std::function<void()> callback) = 0;
+	};
+
+	class IProviderFrontend {
+	public:
+		virtual ~IProviderFrontend() = default;
+
+		virtual void Draw(ActionSet& set) = 0;
 	};
 }

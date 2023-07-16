@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace Hotline {
+namespace hotline {
 
     FuzzyScore FuzzyScorer::GetFuzzyScore(const std::string &query, const std::string &queryLower, int querySize,
                                           const std::string &target, const std::string &targetLower, int targetSize) {

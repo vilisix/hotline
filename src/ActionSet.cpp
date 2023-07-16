@@ -4,7 +4,7 @@
 #include <functional>
 #include <sstream>
 
-namespace Hotline {
+namespace hotline {
 
     ActionSet::ActionSet()
             : _scorer(std::make_unique<FuzzyScorer>()) {}

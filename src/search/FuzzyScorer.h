@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-namespace Hotline {
+namespace hotline {
 
     struct FuzzyScore {
         int score = 0;

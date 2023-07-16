@@ -8,7 +8,7 @@
 #include "Action.h"
 #include "search/FuzzyScorer.h"
 
-namespace Hotline {
+namespace hotline {
 	struct ActionVariant {
 		std::string actionName;
 		std::vector<std::string> actionArguments;
