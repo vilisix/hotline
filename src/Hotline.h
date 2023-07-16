@@ -12,7 +12,7 @@ namespace Hotline {
     struct Config {
         //  main
         ImGuiKey toggleKey = ImGuiKey_F1;
-        bool showRecentActions = false;
+        bool showRecentActions = true;
 
         //  window
         float scaleFactor = 1.0f;

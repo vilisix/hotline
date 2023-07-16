@@ -57,6 +57,7 @@ namespace Hotline {
         _actionArguments.clear();
         _selectionIndex = 0;
         _inputBuffer[0] = '\0';
+        _queryVariants.clear();
     }
 
 	void Hotline::SetExitCallback(std::function<void()> callback) {

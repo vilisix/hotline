@@ -335,7 +335,8 @@ struct ArgProvider<bool> : public PresetArgProvider<bool> {
     void ProvideFromString(const std::string &str) override {
         if (str == "true" || str == "1") {
             _arg = true;
+        } else {
+			_arg = false;
         }
-        _arg = false;
     }
 };
