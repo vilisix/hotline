@@ -10,47 +10,76 @@ namespace hotline {
         if (!hotlineConfig.showRecentActions) {
             return _queryVariants;
         }
-        return _input.empty() ? _recentCommands : _queryVariants;
+        return _input.empty() ? _recentActions : _queryVariants;
     }
 
 	std::string& Hotline::GetHeader() {
         if(!_queryVariants.empty()) return hotlineConfig.listHeaderSearch;
-        if(hotlineConfig.showRecentActions && !_recentCommands.empty()) return hotlineConfig.listHeaderRecents;
+        if(hotlineConfig.showRecentActions && !_recentActions.empty()) return hotlineConfig.listHeaderRecents;
         return hotlineConfig.listHeaderNone;
 	}
 
 	void Hotline::Draw(ActionSet& set) {
         HandleKeyInput(set);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, hotlineConfig.childRounding);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, hotlineConfig.frameRounding);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, hotlineConfig.windowRounding);
+        OnPreWindow();
+        OnWindowBegin();
 
+        OnTextInput();
+        HandleTextInput(_inputBuffer, set);
+        DrawVariants(GetCurrentVariantContainer());
+
+        OnWindowEnd();
+        OnPostWindow();
+	}
+
+    void Hotline::OnWindowEnd() const { ImGui::End(); }
+
+    void Hotline::OnTextInput() {
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        ImGui::SetWindowFontScale(hotlineConfig.windowFontScale * hotlineConfig.scaleFactor);
+
+        auto cursorBefore = ImGui::GetCursorPos();
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, hotlineConfig.inputBgColor);
+        ImGui::InputText("##input", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), hotlineConfig.inputTextFlags);
+        ImGui::PopStyleColor();
+        auto cursorAfter = ImGui::GetCursorPos();
+
+        if (_inputBuffer[0] == '\0') {
+            ImGui::SetCursorPos({cursorBefore.x, cursorBefore.y + (cursorAfter.y - cursorBefore.y) / 12.f});
+            ImGui::Text("");
+            ImGui::SameLine();
+            ImGui::TextColored(hotlineConfig.headerColor, hotlineConfig.header.c_str());
+        }
+
+        ImGui::SetWindowFontScale(hotlineConfig.windowHeaderScale * hotlineConfig.scaleFactor);
+        if (!GetHeader().empty()) {
+            ImGui::Text(GetHeader().c_str());
+        }
+        ImGui::SetWindowFontScale(hotlineConfig.windowFontScale * hotlineConfig.scaleFactor);
+    }
+
+    void Hotline::OnWindowBegin() const {
         auto io = ImGui::GetIO();
         ImVec2 position{io.DisplaySize.x * hotlineConfig.windowPos.x, io.DisplaySize.y * hotlineConfig.windowPos.y};
         ImVec2 size{io.DisplaySize.x * hotlineConfig.windowSize.x, io.DisplaySize.y * hotlineConfig.windowSize.y};
         ImGui::SetNextWindowPos(position, ImGuiCond_Always, hotlineConfig.windowPivot);
         ImGui::SetNextWindowSize(size);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, hotlineConfig.bgColor);
         ImGui::Begin("HotlineWindow", 0, hotlineConfig.windowFlags);
+        ImGui::PopStyleColor();
         ImGui::SetKeyboardFocusHere();
-        ImGui::Text(hotlineConfig.header.c_str());
-        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-        ImGui::SetWindowFontScale(hotlineConfig.windowFontScale * hotlineConfig.scaleFactor);
-        ImGui::InputText("hotlineInput", _inputBuffer, IM_ARRAYSIZE(_inputBuffer), hotlineConfig.inputTextFlags);
+    }
 
-        ImGui::SetWindowFontScale(hotlineConfig.windowHeaderScale * hotlineConfig.scaleFactor);
-        ImGui::Text(GetHeader().c_str());
-        ImGui::SetWindowFontScale(hotlineConfig.windowFontScale * hotlineConfig.scaleFactor);
+    void Hotline::OnPostWindow() const { ImGui::PopStyleVar(3); }
 
-        HandleTextInput(_inputBuffer, set);
-        DrawVariants(GetCurrentVariantContainer());
+    void Hotline::OnPreWindow() const {
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, hotlineConfig.childRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, hotlineConfig.frameRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, hotlineConfig.windowRounding);
+    }
 
-        ImGui::SetWindowFontScale(hotlineConfig.windowHeaderScale * hotlineConfig.scaleFactor);
-        ImGui::PopStyleVar(3);
-        ImGui::End();
-	}
-
-	void Hotline::Reset() {
+    void Hotline::Reset() {
         _input.clear();
         _prevActionName.clear();
         _currentActionName.clear();
@@ -104,32 +133,45 @@ namespace hotline {
 
     void Hotline::HandleApplyCommand(ActionSet& set) {
         ActionStartResult applyCommandResult = Success;
-        if (hotlineConfig.showRecentActions && _input.empty() && !_recentCommands.empty()) {
-            _currentActionName = _recentCommands[_selectionIndex].actionName;
-            applyCommandResult = set.ExecuteAction(_recentCommands[_selectionIndex].actionName,
-                                _recentCommands[_selectionIndex].actionArguments);
-            auto currentCommandIter = _recentCommands.begin() + _selectionIndex;
-            std::rotate(_recentCommands.begin(), currentCommandIter, currentCommandIter + 1);
-        } else if (!_queryVariants.empty()) {
-            auto actionName = _queryVariants[_selectionIndex].actionName;
-            auto actionArgs = _actionArguments;
-            _currentActionName = actionName;
-            applyCommandResult = set.ExecuteAction(actionName, _actionArguments);
-            auto executedAction = std::find_if(_recentCommands.begin(), _recentCommands.end(),
-                                               [&actionName, &actionArgs](const ActionVariant &variant) {
-                                                   return (variant.actionName == actionName) &&
-                                                          (variant.actionArguments == actionArgs);
-                                               });
-            if (executedAction != _recentCommands.end()) {
-                std::rotate(_recentCommands.begin(), executedAction, executedAction + 1);
-            } else {
-                if (_actionArguments.size() > _queryVariants[_selectionIndex].actionArguments.size()) {
-					_actionArguments.resize(_queryVariants[_selectionIndex].actionArguments.size());
-                }
-                _recentCommands.push_back({_queryVariants[_selectionIndex].actionName, _actionArguments});
-                std::rotate(_recentCommands.begin(), _recentCommands.end() - 1, _recentCommands.end());
-            }
+        const bool applyRecentAction = hotlineConfig.showRecentActions && _input.empty() && !_recentActions.empty();
+        const bool haveSearchAction = !_queryVariants.empty();
+        if (applyRecentAction) {
+            ExecuteRecentAction(set);
+        } else if (haveSearchAction) {
+            ExecuteSearchAction(set);
         }
+    }
+
+    void Hotline::ExecuteSearchAction(ActionSet &set) {
+        auto actionName = _queryVariants[_selectionIndex].actionName;
+        auto actionArgs = _actionArguments;
+        _currentActionName = actionName;
+        set.ExecuteAction(actionName, _actionArguments);
+        auto executedAction = std::find_if(_recentActions.begin(), _recentActions.end(),
+                                           [&actionName, &actionArgs](const ActionVariant &variant) {
+                                               return (variant.actionName == actionName) &&
+                                                      (variant.actionArguments == actionArgs);
+                                           });
+        if (executedAction != _recentActions.end()) {
+            std::rotate(_recentActions.begin(), executedAction, executedAction + 1);
+        } else {
+            if (_actionArguments.size() > _queryVariants[_selectionIndex].actionArguments.size()) {
+                _actionArguments.resize(_queryVariants[_selectionIndex].actionArguments.size());
+            }
+            ActionVariant var;
+            var.actionName = _queryVariants[_selectionIndex].actionName;
+            var.actionArguments = _actionArguments;
+            _recentActions.push_back(var);
+            std::rotate(_recentActions.begin(), _recentActions.end() - 1, _recentActions.end());
+        }
+    }
+
+    void Hotline::ExecuteRecentAction(ActionSet &set) {
+        _currentActionName = _recentActions[_selectionIndex].actionName;
+        set.ExecuteAction(_recentActions[_selectionIndex].actionName,
+                                               _recentActions[_selectionIndex].actionArguments);
+        auto currentCommandIter = _recentActions.begin() + _selectionIndex;
+        std::rotate(_recentActions.begin(), currentCommandIter, currentCommandIter + 1);
     }
 
     void Hotline::SplitInput() {
@@ -173,7 +215,7 @@ namespace hotline {
 
     void Hotline::DrawVariant(const ActionVariant &variant) {
         auto childSize = ImGui::GetContentRegionAvail();
-        if (variant.fuzzyResult.positions.empty()) {
+        if (variant.positions.empty()) {
             ImGui::Text(variant.actionName.c_str());
         } else {
             int highlightIdx = 0;
@@ -181,8 +223,8 @@ namespace hotline {
 
             for (size_t i = 0; i < variant.actionName.size(); i++) {
                 scoreBuf[0] = variant.actionName[i];
-                if (highlightIdx < variant.fuzzyResult.positions.size() &&
-                    i == variant.fuzzyResult.positions[highlightIdx]) {
+                if (highlightIdx < variant.positions.size() &&
+                    i == variant.positions[highlightIdx]) {
                     ImGui::TextColored(hotlineConfig.variantMatchLettersColor, scoreBuf);
                     highlightIdx++;
                 } else {

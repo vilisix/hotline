@@ -12,7 +12,7 @@ void hotline::ActionManager::Update() {
 	if (state == InProgress) {
 		assert(_providerFrontend);
 		_providerFrontend->Draw(*_set);
-		return;			
+		return;
 	}
 
 	if (state == Provided) {

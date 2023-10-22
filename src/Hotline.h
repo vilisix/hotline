@@ -21,16 +21,16 @@ namespace hotline {
         float childRounding = 8.0f;
         ImVec2 windowPos = {0.5f, 0.2f};   // relative to display size
         ImVec2 windowPivot = {0.5f, 0.f};
-        ImVec2 windowSize = {0.75f, 0.f};  // relative to display size
+        ImVec2 windowSize = {0.5f, 0.f};  // relative to display size
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar
                                        | ImGuiWindowFlags_NoMove
                                        | ImGuiWindowFlags_AlwaysAutoResize
                                        | ImGuiWindowFlags_NoScrollbar
                                        | ImGuiWindowFlags_NoNav;
-        std::string header = "hotline";
+        std::string header = "hotline search";
         std::string listHeaderRecents = "history:";
         std::string listHeaderSearch = "fuzzy search:";
-        std::string listHeaderNone = "lightweight framework for fast action executing";
+        std::string listHeaderNone = "";
         float windowHeaderScale = 1.0f;
         float windowFontScale = 1.6f;
         //  input
@@ -45,6 +45,9 @@ namespace hotline {
         ImVec4 variantMatchLettersColor = {0.996f, 0.447f, 0.298f, 1.0f};
         ImVec4 variantArgumentsColor = {0.749f, 0.855f, 0.655f, 0.6f};
         ImVec4 variantInputColor = {0.749f, 0.855f, 0.655f, 1.0f};
+        const ImVec4 bgColor = {0.15f,0.15f,0.15f,1.f};
+        const ImVec4 inputBgColor = {0.15f,0.15f,0.15f,1.f};
+        const ImVec4 headerColor = {0.4f,0.4f,0.4f,1.f};
     };
 
     static Config hotlineConfig;
@@ -81,10 +84,24 @@ namespace hotline {
         std::vector<std::string> _actionArguments;
 
         std::vector<ActionVariant> _queryVariants;
-        std::vector<ActionVariant> _recentCommands;
+        std::vector<ActionVariant> _recentActions;
 
         std::function<void()> _onExitCallback;
 
         void SplitInput();
+
+        void OnPreWindow() const;
+
+        void OnPostWindow() const;
+
+        void OnWindowBegin() const;
+
+        void OnTextInput();
+
+        void OnWindowEnd() const;
+
+        void ExecuteRecentAction(ActionSet &set);
+
+        void ExecuteSearchAction(ActionSet &set);
     };
 }

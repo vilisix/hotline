@@ -9,20 +9,33 @@
 #include "search/FuzzyScorer.h"
 
 namespace hotline {
-	struct ActionVariant {
+	struct ActionVariant : public FuzzyScore{
 		std::string actionName;
 		std::vector<std::string> actionArguments;
-		FuzzyScore fuzzyResult;
 	};
 
-
-	class ActionSet {
+	template<typename T, typename VariantType>
+	class ActionSetBase {
 	public:
-		enum State {
-			
-		};
-		ActionSet();
+		ActionSetBase();
 
+		virtual std::vector<VariantType> FindVariants(const std::string& query) = 0;
+
+	protected:
+		std::map<std::string, T> _actions;
+		std::unique_ptr<FuzzyScorer> _scorer;
+	};
+
+	class ActionSetFunc : public ActionSetBase<std::function<void()>, FuzzyScore> {
+	public:
+		void AddAction(const std::string& name, std::function<void()> func);
+		void ExecuteAction(const std::string& actionName);
+
+		std::vector<FuzzyScore> FindVariants(const std::string &query) override;
+	};
+
+	class ActionSetFuncPar : public ActionSetBase<std::unique_ptr<BaseAction>, ActionVariant> {
+	public:
 		template <typename F, typename... Args>
 		void AddAction(const std::string& name, F&& f, Args&&... args) {
 			_actions[name] = std::make_unique<Action<
@@ -30,20 +43,30 @@ namespace hotline {
 				(name, std::forward<F>(f), std::forward<Args>(args)...);
 		}
 
-		ActionStartResult ExecuteAction(const std::string& name, const std::vector<std::string>& args);
-		ActionStartResult ExecuteAction(const std::string& actionString);
+		void ExecuteAction(const std::string& name, const std::vector<std::string>& args);
+		void ExecuteAction(const std::string& actionString);
+		std::vector<ActionVariant> FindVariants(const std::string &query) override;
+	};
 
-		void Update();
-		void Reset();
-		ArgumentProvidingState GetState();
+	class ActionSetFuncParProvider : public ActionSetBase<std::unique_ptr<BaseAction>, ActionVariant> {
+	public:
+		template <typename F, typename... Args>
+		void AddAction(const std::string& name, F&& f, Args&&... args) {
+			_actions[name] = std::make_unique<Action<
+					std::decay_t<F>, std::remove_cv_t<std::remove_reference_t<Args>>...>>
+				(name, std::forward<F>(f), std::forward<Args>(args)...);
+		}
 
-		std::vector<ActionVariant> FindVariants(const std::string& query);
+		void ExecuteAction(const std::string& name, const std::vector<std::string>& args);
+		void ExecuteAction(const std::string& actionString);
+		std::vector<ActionVariant> FindVariants(const std::string &query) override;
+
+		void Update(); // to IActionBackend
+		void Reset(); // to IActionBackend
+		ArgumentProvidingState GetState(); // to IActionBackend
 
 	private:
-		std::map<std::string, std::unique_ptr<BaseAction>> _actions;
-		BaseAction* _currentActionToFill = nullptr;
-		std::unique_ptr<FuzzyScorer> _scorer;
-
-		ArgumentProvidingState _state;
+		BaseAction* _currentActionToFill = nullptr; // to IActionBackend
+		ArgumentProvidingState _state; // to IActionBackend
 	};
 }
